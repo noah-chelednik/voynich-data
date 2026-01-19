@@ -1,0 +1,31 @@
+{
+  "sources_loaded": [
+    "zl",
+    "it",
+    "cd",
+    "fg",
+    "gc"
+  ],
+  "total_lines": 4072,
+  "exact_matches": 901,
+  "normalized_matches": 293,
+  "content_mismatches": 655,
+  "zl_only_lines": 3,
+  "it_only_lines": 0,
+  "both_eva_present": 4069,
+  "per_source_counts": {
+    "zl": 4072,
+    "it": 4069,
+    "cd": 2154,
+    "fg": 3980,
+    "gc": 4070
+  },
+  "high_similarity_matches": 2220,
+  "total_agreeing": 3414,
+  "agreement_rate": 0.8390267879085771,
+  "eva_coverage": {
+    "zl": 4072,
+    "it": 4069,
+    "both": 4069
+  }
+}

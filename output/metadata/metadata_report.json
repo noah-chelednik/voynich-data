@@ -1,0 +1,41 @@
+{
+  "source_file": "ZL3b-n.txt",
+  "source_hash": "bf5b6d4ac1e3",
+  "build_timestamp": "2026-01-18T11:23:07.688503+00:00",
+  "build_version": "0.2.3",
+  "total_pages": 226,
+  "pages_with_text": 206,
+  "pages_by_section": {
+    "herbal_a": 48,
+    "herbal_b": 70,
+    "astronomical": 26,
+    "biological": 20,
+    "cosmological": 6,
+    "pharmaceutical": 32,
+    "recipes": 24
+  },
+  "pages_by_language": {
+    "A": 114,
+    "B": 82,
+    "unknown": 30
+  },
+  "pages_by_hand": {
+    "1": 113,
+    "2": 46,
+    "5": 7,
+    "3": 33,
+    "4": 26,
+    "@": 1
+  },
+  "total_folios": 102,
+  "foldout_folios": 10,
+  "missing_folios": 4,
+  "total_quires": 18,
+  "complete_quires": 17,
+  "total_lines": 3957,
+  "total_labels": 115,
+  "output_dir": "",
+  "pages_file": "",
+  "folios_file": "",
+  "quires_file": ""
+}

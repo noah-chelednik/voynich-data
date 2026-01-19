@@ -1,0 +1,101 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Voynich Transcription Lines",
+  "type": "object",
+  "required": ["page_id", "line_number", "line_index", "line_id", "text", "source"],
+  "properties": {
+    "page_id": {
+      "type": "string",
+      "pattern": "^f\\d+[rv]\\d*$",
+      "description": "Normalized page identifier (e.g., f1r, f85v3)"
+    },
+    "line_number": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Source locus ID within page (may have gaps - preserves original numbering)"
+    },
+    "line_index": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Sequential index within page (always 1..n, no gaps)"
+    },
+    "line_id": {
+      "type": "string",
+      "pattern": "^f\\d+[rv]\\d*:\\d+$",
+      "description": "Unique line identifier: {page_id}:{line_number}"
+    },
+    "text": {
+      "type": "string",
+      "description": "Raw transcription text for this line (with IVTFF markup)"
+    },
+    "text_clean": {
+      "type": "string",
+      "description": "Cleaned text (markup removed, @NNN; codes preserved - lossless)"
+    },
+    "line_type": {
+      "type": "string",
+      "enum": ["paragraph", "label", "circle", "radius", "other"],
+      "description": "Type of text"
+    },
+    "position": {
+      "type": "string",
+      "enum": ["@", "+", "=", "*"],
+      "description": "Position indicator (new, continue, end, new paragraph)"
+    },
+    "quire": {
+      "type": ["string", "null"],
+      "description": "Quire identifier (A-T)"
+    },
+    "section": {
+      "type": ["string", "null"],
+      "description": "Manuscript section"
+    },
+    "currier_language": {
+      "type": ["string", "null"],
+      "enum": ["A", "B", null],
+      "description": "Currier's language classification"
+    },
+    "hand": {
+      "type": ["string", "null"],
+      "description": "Scribe hand identifier"
+    },
+    "illustration_type": {
+      "type": ["string", "null"],
+      "description": "Type of illustration on page"
+    },
+    "source": {
+      "type": "string",
+      "description": "Source identifier (e.g., zandbergen_landini)"
+    },
+    "source_version": {
+      "type": "string",
+      "description": "SHA256 hash prefix of source file"
+    },
+    "char_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Count of EVA characters in clean text"
+    },
+    "word_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Count of words (separated by . or ,)"
+    },
+    "has_uncertain": {
+      "type": "boolean",
+      "description": "Contains uncertain reading markers (?)"
+    },
+    "has_illegible": {
+      "type": "boolean",
+      "description": "Contains illegible markers"
+    },
+    "has_alternatives": {
+      "type": "boolean",
+      "description": "Contains alternative readings ([a:b])"
+    },
+    "has_high_ascii": {
+      "type": "boolean",
+      "description": "Contains high-ASCII codes (@NNN;)"
+    }
+  }
+}

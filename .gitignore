@@ -1,0 +1,77 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# ruff
+.ruff_cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+# Keep raw sources (large files) tracked but allow local override
+# data_sources/raw_sources/*.txt
+# data_sources/raw_sources/*.evt
+
+# Generated outputs (should be rebuilt, not committed)
+# Uncomment if you want to exclude these from git:
+# output/*.jsonl
+# output/*.parquet
+
+# Reports (can be regenerated)
+# reports/*.json
+# reports/*.md
+
+# Temporary files
+*.tmp
+*.temp
+*.log

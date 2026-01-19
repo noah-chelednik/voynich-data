@@ -1,0 +1,60 @@
+{
+  "build_date": "2026-01-18T09:30:28.764695Z",
+  "errors": [],
+  "format_options": "2.0 M 5",
+  "format_version": "Eva-",
+  "lines_by_type": {
+    "label": 115,
+    "paragraph": 3957
+  },
+  "lines_with_high_ascii": 115,
+  "page_ids_without_lines": [
+    "f116v",
+    "f65r",
+    "f67v2",
+    "f68r3",
+    "f68v1",
+    "f69v",
+    "f70r1",
+    "f70v1",
+    "f70v2",
+    "f71r",
+    "f71v",
+    "f72r1",
+    "f72r2",
+    "f72r3",
+    "f72v1",
+    "f72v2",
+    "f72v3",
+    "f73r",
+    "f73v",
+    "f85r2"
+  ],
+  "pages_by_language": {
+    "A": 114,
+    "B": 82,
+    "unknown": 30
+  },
+  "pages_by_section": {
+    "astronomical": 8,
+    "biological": 19,
+    "cosmological": 10,
+    "herbal": 129,
+    "pharmaceutical": 16,
+    "stars": 25,
+    "text_only": 7,
+    "zodiac": 12
+  },
+  "pages_with_lines": 206,
+  "pages_without_lines": 20,
+  "source_file": "/home/claude/voynich-data/voynich-data/data_sources/cache/ZL3b-n.txt",
+  "source_hash": "bf5b6d4ac1e3a51b1847a9c388318d609020441ccd56984c901c32b09beccafc",
+  "source_verified": true,
+  "text_clean_policy": "centralized_v0.2.1",
+  "total_characters": 170564,
+  "total_lines": 4072,
+  "total_pages": 226,
+  "total_pages_in_source": 226,
+  "total_words": 33711,
+  "warnings": []
+}

@@ -1,0 +1,22 @@
+# VCAT Data - Locked Dev Dependencies
+# Generated: 2026-01-17
+# Python: 3.11+
+#
+# Install with: pip install -r requirements-dev.txt
+
+# Testing
+pytest==9.0.2
+pytest-cov==7.0.0
+
+# Linting & Formatting
+ruff==0.14.13
+black==25.12.0
+
+# Type checking
+mypy==1.19.1
+types-requests>=2.31.0
+types-PyYAML>=6.0.0
+
+# Interactive development
+ipython>=8.0.0
+jupyter>=1.0.0

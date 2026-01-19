@@ -1,0 +1,150 @@
+# VCAT Data Sources Configuration
+# ================================
+# This file documents all primary data sources for the VCAT project.
+# Each source should be verified before implementation.
+
+sources:
+  # Primary EVA Transcription Sources
+  landini_stolfi_interlinear:
+    name: "Landini-Stolfi Interlinear File (LSI)"
+    description: |
+      The de facto standard interlinear transcription file combining multiple
+      historical transcriptions in EVA encoding. Includes Takahashi's complete
+      transcription (1999 version), Currier, FSG, and others.
+    primary_url: "http://www.voynich.nu/data/beta/LSI_ivtff_0d.txt"
+    alternative_urls:
+      - "https://www.ic.unicamp.br/~stolfi/voynich/98-12-28/interln16e6.evt"
+    format: "IVTFF (Intermediate Voynich Transliteration File Format)"
+    content_type: "text/plain"
+    includes_transcribers:
+      - code: "H"
+        name: "Takeshi Takahashi"
+        description: "First complete transcription, uses full EVA including weirdos"
+      - code: "C"
+        name: "Prescott Currier"
+        description: "Historical transcription, converted to EVA"
+      - code: "F"
+        name: "First Study Group (Friedman)"
+        description: "1940s punchcard transcription, converted to EVA"
+      - code: "L"
+        name: "Don Latham"
+        description: "Partial transcription"
+      - code: "R"
+        name: "Mike Roe"
+        description: "Partial transcription"
+    status: "verified_accessible"
+    notes: |
+      This is currently the best single source for getting started.
+      Contains multiple transcriptions aligned interlinearly.
+
+  zandbergen_ivtff:
+    name: "Zandbergen-Landini (ZL) Transcription"
+    description: |
+      Complete and most accurate EVA transcription by René Zandbergen,
+      available in modern IVTFF 2.0 format.
+    primary_url: "http://www.voynich.nu/data/ivtff/ZL3a-n.txt"
+    format: "IVTFF 2.0"
+    content_type: "text/plain"
+    status: "to_verify"
+    notes: |
+      The ZL transcription is considered the most accurate complete transcription.
+      Uses extended EVA including rare characters.
+
+  takahashi_website:
+    name: "Takeshi Takahashi's Website"
+    description: |
+      The original Takahashi transcription in HTML format.
+      Represents the author's current version (may differ from LSI version).
+    primary_url: "http://voynich.freie-literatur.de/index.php?show=extractor"
+    alternative_urls:
+      - "http://www3.justnet.ne.jp/~ttakahashike/voynich/pages/index.htm"  # Historical, may be dead
+    format: "HTML with EVA transcription"
+    content_type: "text/html"
+    status: "to_verify"
+    notes: |
+      The freie-literatur.de version provides an extractor tool.
+      HTML format requires parsing to extract clean text.
+
+  stolfi_concordance:
+    name: "Stolfi's Concordance and Analysis Files"
+    description: |
+      Jorge Stolfi's comprehensive collection of Voynich analysis files
+      including concordances, word lists, and interlinear transcriptions.
+    primary_url: "https://www.ic.unicamp.br/~stolfi/voynich/"
+    key_files:
+      - path: "98-12-28-interln16e6/"
+        description: "Interlinear file version 1.6e6"
+      - path: "99-01-16-concordance/"
+        description: "Complete word concordance"
+      - path: "00-12-21-word-length-distr/"
+        description: "Word length distribution analysis"
+    format: "Mixed (text, HTML)"
+    status: "to_verify"
+    notes: |
+      Extensive historical resource. Files may use older EVA conventions.
+
+  # Metadata Sources
+  voynich_nu:
+    name: "voynich.nu (René Zandbergen)"
+    description: |
+      The most comprehensive online resource for Voynich Manuscript research.
+      Contains metadata, section classifications, quire structure, and image links.
+    primary_url: "https://www.voynich.nu/"
+    key_pages:
+      - path: "transcr.html"
+        description: "Transliteration overview and file links"
+      - path: "folios.html"
+        description: "Folio-by-folio information"
+      - path: "quire.html"
+        description: "Quire structure"
+      - path: "extra/sp_transcr.html"
+        description: "Special topics on transliteration"
+    status: "verified_accessible"
+    notes: |
+      Primary source for manuscript structure metadata.
+      Maintained by René Zandbergen, leading Voynich researcher.
+
+  beinecke_library:
+    name: "Yale Beinecke Rare Book & Manuscript Library"
+    description: |
+      Official repository of the Voynich Manuscript (MS 408).
+      Provides high-resolution scans.
+    primary_url: "https://brbl-dl.library.yale.edu/vufind/Record/3519597"
+    iiif_manifest: "https://collections.library.yale.edu/manifests/oid/2002046"
+    status: "to_verify"
+    notes: |
+      Official source for images. IIIF manifest provides programmatic access.
+
+  # Additional Transcription Sources (for mismatch analysis)
+  glen_claston_v101:
+    name: "Glen Claston v101 Transcription"
+    description: |
+      Alternative complete transcription using a glyph-based alphabet.
+      More detailed than EVA in capturing visual differences.
+    primary_url: "http://www.voynich.nu/data/ivtff/GC_ivtff_1b.txt"
+    format: "IVTFF (v101 alphabet)"
+    status: "to_verify"
+    notes: |
+      Useful for comparison. v101 alphabet captures more visual detail than EVA.
+
+# Verification checklist for each source:
+# [ ] URL accessible (HTTP 200)
+# [ ] Content type matches expected
+# [ ] Can identify page boundaries
+# [ ] Can identify line numbers
+# [ ] Character set documented
+# [ ] No authentication required
+# [ ] Downloaded with hash stored
+
+verification_protocol:
+  steps:
+    - name: "accessibility"
+      description: "Verify URL returns HTTP 200"
+    - name: "content_type"
+      description: "Verify response content type matches expected"
+    - name: "sample_download"
+      description: "Download sample and compute SHA256 hash"
+    - name: "format_check"
+      description: "Verify file format matches documentation"
+    - name: "structure_check"
+      description: "Verify page and line boundaries can be identified"

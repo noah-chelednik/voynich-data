@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Voynich Transcription Mismatch Index",
+  "description": "Schema for tracking disagreements between transcription sources",
+  "type": "object",
+  "required": ["page_id", "line_number", "line_id", "status"],
+  "properties": {
+    "page_id": {
+      "type": "string",
+      "pattern": "^f\\d+[rv]\\d*$"
+    },
+    "line_number": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Reference line number (primary source numbering)"
+    },
+    "line_id": {
+      "type": "string",
+      "pattern": "^f\\d+[rv]\\d*:\\d+$"
+    },
+    "primary_text": {
+      "type": ["string", "null"],
+      "description": "Primary transcription text (null if missing)"
+    },
+    "secondary_text": {
+      "type": ["string", "null"],
+      "description": "Secondary transcription text (null if missing)"
+    },
+    "primary_source": {
+      "type": "string",
+      "description": "Primary source identifier"
+    },
+    "secondary_source": {
+      "type": "string",
+      "description": "Secondary source identifier"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ok",
+        "content_mismatch",
+        "line_count_mismatch",
+        "missing_in_primary",
+        "missing_in_secondary",
+        "reflow",
+        "parse_error",
+        "page_missing",
+        "other"
+      ],
+      "description": "Alignment status"
+    },
+    "mismatch_type": {
+      "type": ["string", "null"],
+      "description": "Specific type of content mismatch"
+    },
+    "similarity_score": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Text similarity score (0-1) if both texts present"
+    },
+    "notes": {
+      "type": "array",
+      "items": {"type": "string"},
+      "default": [],
+      "description": "Explanation of mismatch"
+    }
+  }
+}

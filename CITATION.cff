@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+message: "If you use this software or data, please cite it as below."
+type: software
+title: "Voynich Computational Analysis Toolkit - Data"
+abstract: >-
+  Data processing infrastructure for computational analysis of the 
+  Voynich Manuscript. Provides parsers, validators, and datasets for
+  the EVA transcription of this undeciphered 15th-century codex.
+authors:
+  - family-names: Chelednik
+    given-names: Noah
+version: 0.1.0
+date-released: 2026-01-17
+license: MIT
+repository-code: "https://github.com/noah-chelednik/voynich-data"
+url: "https://github.com/noah-chelednik/voynich-data"
+keywords:
+  - voynich-manuscript
+  - computational-humanities
+  - digital-humanities
+  - transcription
+  - eva
+  - historical-manuscripts
+references:
+  - type: data
+    title: "Voynich Manuscript EVA Transcription Dataset"
+    authors:
+      - family-names: Chelednik
+        given-names: Noah
+    repository: "https://huggingface.co/datasets/Ched-ai/voynich-eva"
+    license: CC-BY-4.0

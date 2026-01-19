@@ -1,0 +1,22 @@
+# VCAT Data - Locked Dependencies
+# Generated: 2026-01-17
+# Python: 3.11+
+#
+# Install with: pip install -r requirements-lock.txt
+# For development: pip install -e ".[dev]"
+
+# Core dependencies
+requests==2.32.5
+PyYAML==6.0.3
+jsonschema==4.26.0
+datasets==4.5.0
+pandas==2.3.3
+
+# Required by datasets
+pyarrow>=14.0.0
+huggingface_hub>=0.21.0
+fsspec>=2023.1.0
+aiohttp>=3.8.0
+multiprocess>=0.70.0
+dill>=0.3.6
+xxhash>=0.8.0

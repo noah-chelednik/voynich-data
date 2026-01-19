@@ -1,0 +1,53 @@
+{
+  "build": {
+    "date": "2026-01-18T09:30:28.764695Z",
+    "tool_version": "0.2.2"
+  },
+  "contract": {
+    "charset_covenant": "Locked for v0.2.x - see docs/charset_decisions.md",
+    "flags_computed_from": "tag-stripped text before marker removal",
+    "json_serialization": "sort_keys=True, separators=(',',':'), newline='\\n'",
+    "ordering": "deterministic by (folio_number, side, panel, line_index)"
+  },
+  "dataset": {
+    "config": "lines",
+    "name": "voynich-eva",
+    "version": "0.2.2"
+  },
+  "files": [
+    {
+      "name": "eva_lines.jsonl",
+      "reproducible": true,
+      "sha256": "53e5db5ab1364eec553de3e20974a16b7af00916906f3758b5f3e2cfd0f4f7c7"
+    },
+    {
+      "name": "eva_lines.parquet",
+      "note": "Content-equivalent; bitwise reproducibility not guaranteed",
+      "reproducible": false
+    },
+    {
+      "name": "eva_lines_build_report.json",
+      "note": "Contains build timestamp",
+      "reproducible": false
+    }
+  ],
+  "manifest_version": "1.2",
+  "reproducibility": {
+    "canonical_artifact": "eva_lines.jsonl",
+    "cross_platform": "Uses newline='\\n' for byte-identical output on all OS",
+    "note": "Parquet is content-equivalent but not bitwise-reproducible",
+    "scope": "JSONL only",
+    "verification": "sha256sum -c SHA256SUMS"
+  },
+  "source": {
+    "expected_sha256": "bf5b6d4ac1e3a51b1847a9c388318d609020441ccd56984c901c32b09beccafc",
+    "name": "zandbergen_landini",
+    "verified": true
+  },
+  "statistics": {
+    "pages_in_source": 226,
+    "pages_with_lines": 206,
+    "pages_without_lines": 20,
+    "total_records": 4072
+  }
+}

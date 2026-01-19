@@ -1,0 +1,81 @@
+{
+  "lsi": {
+    "source_name": "Landini-Stolfi Interlinear (LSI)",
+    "url": "http://www.voynich.nu/data/beta/LSI_ivtff_0d.txt",
+    "accessible": false,
+    "status_code": 404,
+    "content_type": "text/html; charset=iso-8859-1",
+    "sample_hash": null,
+    "sample_size": null,
+    "can_parse_pages": null,
+    "can_parse_lines": null,
+    "page_count": null,
+    "line_count": null,
+    "errors": [
+      "HTTP 404 - not accessible"
+    ],
+    "warnings": [],
+    "notes": [],
+    "is_success": false
+  },
+  "voynich_nu": {
+    "source_name": "voynich.nu",
+    "url": "https://www.voynich.nu/transcr.html",
+    "accessible": true,
+    "status_code": 200,
+    "content_type": "text/html",
+    "sample_hash": "57f8aaf6b1cdd6a292361b3a94e723f8fb14f0960b2cb349acee142fbadb19a5",
+    "sample_size": 60410,
+    "can_parse_pages": null,
+    "can_parse_lines": null,
+    "page_count": null,
+    "line_count": null,
+    "errors": [],
+    "warnings": [],
+    "notes": [
+      "Content appears to be Voynich-related",
+      "Transcription/transliteration content found"
+    ],
+    "is_success": true
+  },
+  "stolfi": {
+    "source_name": "Stolfi UNICAMP",
+    "url": "https://www.ic.unicamp.br/~stolfi/voynich/",
+    "accessible": true,
+    "status_code": 200,
+    "content_type": "text/html;charset=ISO-8859-1",
+    "sample_hash": "ab848433749ee99fea913e8115b37ba4e26c4d0c1ecde8333ac0d8179fdee69a",
+    "sample_size": 9602,
+    "can_parse_pages": null,
+    "can_parse_lines": null,
+    "page_count": null,
+    "line_count": null,
+    "errors": [],
+    "warnings": [],
+    "notes": [],
+    "is_success": true
+  },
+  "zl": {
+    "source_name": "Zandbergen-Landini (ZL)",
+    "url": "http://www.voynich.nu/data/ivtff/ZL3a-n.txt",
+    "accessible": false,
+    "status_code": 404,
+    "content_type": "text/html; charset=iso-8859-1",
+    "sample_hash": null,
+    "sample_size": null,
+    "can_parse_pages": null,
+    "can_parse_lines": null,
+    "page_count": null,
+    "line_count": null,
+    "errors": [
+      "HTTP 404 - not accessible"
+    ],
+    "warnings": [],
+    "notes": [],
+    "is_success": false
+  },
+  "_metadata": {
+    "verification_date": "2026-01-17T04:49:50.119271",
+    "all_pass": false
+  }
+}
