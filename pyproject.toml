@@ -86,6 +86,7 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101"]  # Allow assert in tests
 "notebooks/*" = ["E402"]  # Allow imports not at top of file
+"scripts/*" = ["E402", "B007", "B905", "E741"]
 
 [tool.black]
 line-length = 100

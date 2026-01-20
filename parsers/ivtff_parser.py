@@ -33,7 +33,7 @@ Format specification: http://www.voynich.nu/software/ivtt/IVTFF_format.pdf
 from __future__ import annotations
 
 import re
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -347,13 +347,13 @@ class IVTFFParser:
         """
         yield from self._parse_stream(content.splitlines())
 
-    def _parse_stream(self, lines: Iterator[str]) -> Iterator[Page]:
+    def _parse_stream(self, lines: Iterable[str]) -> Iterator[Page]:
         """Parse a stream of lines.
 
         Internal method that handles the actual parsing logic.
 
         Args:
-            lines: Iterator of text lines to parse.
+            lines: Iterable of text lines to parse.
 
         Yields:
             Page objects as they are completed.

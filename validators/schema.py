@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 from jsonschema import Draft7Validator, ValidationError
 
@@ -33,7 +34,7 @@ from jsonschema import Draft7Validator, ValidationError
 SCHEMA_DIR: Path = Path(__file__).parent.parent / "schemas"
 
 
-def load_schema(schema_name: str) -> dict:
+def load_schema(schema_name: str) -> dict[str, Any]:
     """Load a JSON schema by name.
 
     Loads and parses a JSON schema file from the schemas/ directory.
@@ -63,7 +64,7 @@ def load_schema(schema_name: str) -> dict:
     if not schema_path.exists():
         raise FileNotFoundError(f"Schema not found: {schema_path}")
 
-    return json.loads(schema_path.read_text())
+    return dict(json.loads(schema_path.read_text()))
 
 
 def validate_against_schema(

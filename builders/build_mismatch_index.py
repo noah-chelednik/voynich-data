@@ -142,7 +142,7 @@ class MismatchIndexBuilder:
             logger.error(f"Unknown source_id: {source_id}")
             return False
 
-        filepath = self.cache_dir / config["file"]
+        filepath = self.cache_dir / str(config["file"])
         if not filepath.exists():
             logger.warning(f"Transcription file not found: {filepath}")
             return False

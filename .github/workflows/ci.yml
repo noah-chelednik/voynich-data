@@ -47,7 +47,7 @@ jobs:
           pip install -e ".[dev]"
           pip install pip-audit
       - name: Run pip-audit
-        run: pip-audit --strict --progress-spinner=off
+        run: pip-audit --strict --progress-spinner=off --skip-editable
 
   test:
     runs-on: ubuntu-latest

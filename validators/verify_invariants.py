@@ -44,7 +44,7 @@ class InvariantReport:
     def passed(self) -> bool:
         return len(self.failures) == 0
 
-    def add_failure(self, invariant: str, message: str, record_id: str = None):
+    def add_failure(self, invariant: str, message: str, record_id: str | None = None) -> None:
         self.failures.append({"invariant": invariant, "message": message, "record_id": record_id})
 
     def summary(self) -> str:
@@ -61,7 +61,7 @@ def stream_records(jsonl_path: Path) -> Iterator[dict]:
             yield json.loads(line)
 
 
-def check_text_clean_contract(records: list[dict], report: InvariantReport):
+def check_text_clean_contract(records: list[dict], report: InvariantReport) -> None:
     """INVARIANT: text_clean contains only allowed characters."""
     for r in records:
         text_clean = r.get("text_clean", "")
@@ -80,7 +80,7 @@ def check_text_clean_contract(records: list[dict], report: InvariantReport):
     report.checks_run += 3
 
 
-def check_flags_contract(records: list[dict], report: InvariantReport):
+def check_flags_contract(records: list[dict], report: InvariantReport) -> None:
     """INVARIANT: Flags computed from tag-stripped text."""
     for r in records:
         raw_text = r.get("text", "")
@@ -104,7 +104,7 @@ def check_flags_contract(records: list[dict], report: InvariantReport):
     report.checks_run += 3
 
 
-def check_ids_contract(records: list[dict], report: InvariantReport):
+def check_ids_contract(records: list[dict], report: InvariantReport) -> None:
     """INVARIANT: line_id format and uniqueness."""
     seen_ids = set()
 
@@ -122,7 +122,7 @@ def check_ids_contract(records: list[dict], report: InvariantReport):
     report.checks_run += 2
 
 
-def check_line_index_sequencing(records: list[dict], report: InvariantReport):
+def check_line_index_sequencing(records: list[dict], report: InvariantReport) -> None:
     """INVARIANT: line_index is sequential (1..N) within each page."""
     pages: dict[str, list[int]] = {}
     for r in records:
@@ -141,10 +141,10 @@ def check_line_index_sequencing(records: list[dict], report: InvariantReport):
     report.checks_run += 1
 
 
-def check_ordering_contract(records: list[dict], report: InvariantReport):
+def check_ordering_contract(records: list[dict], report: InvariantReport) -> None:
     """INVARIANT: Records ordered by (folio_number, side, panel, line_index)."""
 
-    def parse_key(r):
+    def parse_key(r: dict) -> tuple[int, int, int, int]:
         page_id = r.get("page_id", "")
         match = re.match(r"f(\d+)([rv])(\d*)", page_id)
         if match:
@@ -167,7 +167,7 @@ def check_ordering_contract(records: list[dict], report: InvariantReport):
     report.checks_run += 1
 
 
-def check_record_count(records: list[dict], report: InvariantReport):
+def check_record_count(records: list[dict], report: InvariantReport) -> None:
     """INVARIANT: Expected record count for v0.2.1."""
     expected_count = 4072
     actual_count = len(records)
@@ -178,7 +178,7 @@ def check_record_count(records: list[dict], report: InvariantReport):
     report.checks_run += 1
 
 
-def check_page_count(records: list[dict], report: InvariantReport):
+def check_page_count(records: list[dict], report: InvariantReport) -> None:
     """INVARIANT: Expected unique page count for v0.2.1."""
     expected_pages = 206
     unique_pages = len({r.get("page_id", "") for r in records})
@@ -214,7 +214,7 @@ def verify_all_invariants(output_dir: Path) -> InvariantReport:
     return report
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="Verify VCAT dataset invariants")
     parser.add_argument("--output-dir", type=Path, default=Path("output"))
     parser.add_argument("--json", action="store_true")

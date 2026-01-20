@@ -199,8 +199,8 @@ def _build_report(
     # Count by section
     pages_by_section: dict[str, int] = {}
     for p in metadata.pages:
-        section = p.section.value if p.section else "unknown"
-        pages_by_section[section] = pages_by_section.get(section, 0) + 1
+        section_key: str = p.section.value if (p.section and p.section.value) else "unknown"
+        pages_by_section[section_key] = pages_by_section.get(section_key, 0) + 1
 
     # Count by language
     pages_by_language: dict[str, int] = {}
