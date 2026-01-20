@@ -42,13 +42,13 @@ print("\n" + "=" * 60)
 print("1. COMPRESSION ANALYSIS (Entropy Upper Bounds)")
 print("=" * 60)
 
-text_bytes = all_clean.encode('utf-8')
+text_bytes = all_clean.encode("utf-8")
 original_size = len(text_bytes)
 
 compressors = {
-    'gzip': gzip.compress,
-    'bz2': bz2.compress,
-    'lzma': lzma.compress,
+    "gzip": gzip.compress,
+    "bz2": bz2.compress,
+    "lzma": lzma.compress,
 }
 
 print(f"\nOriginal size: {original_size:,} bytes")
@@ -66,7 +66,7 @@ import random
 shuffled_chars = list(all_clean)
 random.seed(42)
 random.shuffle(shuffled_chars)
-shuffled_bytes = ''.join(shuffled_chars).encode('utf-8')
+shuffled_bytes = "".join(shuffled_chars).encode("utf-8")
 
 print("\nShuffled text (destroys structure):")
 for name, func in compressors.items():
@@ -84,6 +84,7 @@ print("\n" + "=" * 60)
 print("2. SHANNON ENTROPY")
 print("=" * 60)
 
+
 def entropy(sequence):
     """Calculate Shannon entropy in bits."""
     counts = Counter(sequence)
@@ -95,11 +96,12 @@ def entropy(sequence):
             h -= p * math.log2(p)
     return h
 
+
 def conditional_entropy(sequence, order=1):
     """Calculate conditional entropy H(X_n | X_{n-1}...X_{n-order})."""
     ngrams = defaultdict(Counter)
     for i in range(order, len(sequence)):
-        context = tuple(sequence[i-order:i])
+        context = tuple(sequence[i - order : i])
         next_char = sequence[i]
         ngrams[context][next_char] += 1
 
@@ -113,6 +115,7 @@ def conditional_entropy(sequence, order=1):
             if p_cond > 0:
                 h -= p_joint * math.log2(p_cond)
     return h
+
 
 h0 = math.log2(len(set(chars)))  # Maximum possible
 h1 = entropy(chars)
@@ -214,7 +217,7 @@ for length in range(1, 13):
 
 mean_len = sum(lengths) / len(lengths)
 variance = sum((l - mean_len) ** 2 for l in lengths) / len(lengths)
-std_len = variance ** 0.5
+std_len = variance**0.5
 
 print(f"\nMean length: {mean_len:.2f}")
 print(f"Std dev:     {std_len:.2f}")
@@ -352,4 +355,3 @@ Structural findings:
 print("=" * 60)
 print("Analysis complete.")
 print("=" * 60)
-

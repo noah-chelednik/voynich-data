@@ -200,7 +200,9 @@ class ContextAdapter(logging.LoggerAdapter):
         >>> logger.info("Processing", page_id="f1r", count=42)
     """
 
-    def process(self, msg: str, kwargs: MutableMapping[str, Any]) -> tuple[str, MutableMapping[str, Any]]:
+    def process(
+        self, msg: str, kwargs: MutableMapping[str, Any]
+    ) -> tuple[str, MutableMapping[str, Any]]:
         """Process log message and add context.
 
         Args:

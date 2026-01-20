@@ -44,7 +44,7 @@ jobs:
           python-version: '3.11'
       - name: Install dependencies
         run: |
-          pip install -e ".[dev]"
+          pip install ".[dev]"
           pip install pip-audit
       - name: Run pip-audit
         run: pip-audit --strict --progress-spinner=off --skip-editable
