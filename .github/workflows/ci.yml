@@ -47,7 +47,7 @@ jobs:
           pip install ".[dev]"
           pip install pip-audit
       - name: Run pip-audit
-        run: pip-audit --strict --progress-spinner=off --skip-editable
+        run: pip-audit --strict --progress-spinner=off -r requirements-lock.txt
 
   test:
     runs-on: ubuntu-latest
@@ -74,7 +74,7 @@ jobs:
         run: |
           pip install -e ".[dev]"
       - name: Run EVA builder smoke test
-        run: python -c "from builders.build_eva_lines import smoke_test; smoke_test()"
+        run: python -c "from builders.build_eva_lines import run_smoke_test, build_eva_lines_dataset; records, report = build_eva_lines_dataset(); run_smoke_test(records, report)"
 
   schema-validation:
     runs-on: ubuntu-latest
