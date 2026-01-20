@@ -74,7 +74,7 @@ jobs:
         run: |
           pip install -e ".[dev]"
       - name: Run EVA builder smoke test
-        run: python -c "from builders.build_eva_lines import run_smoke_test, build_eva_lines_dataset; records, report = build_eva_lines_dataset(); run_smoke_test(records, report)"
+        run: python -c "from builders.build_eva_lines import run_smoke_test, build_eva_lines; records, report = build_eva_lines(); run_smoke_test(records, report)"
 
   schema-validation:
     runs-on: ubuntu-latest
