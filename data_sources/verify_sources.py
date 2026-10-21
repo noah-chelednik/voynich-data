@@ -1,45 +1,42 @@
 #!/usr/bin/env python3
 """
-VCAT Source Verification Script
-================================
+VCAT source verification (`vcat-verify`)
+========================================
 
-Phase 0 verification script for VCAT data sources.
+Checks the cached sources against `data_sources/sources.yaml` (roadmap item 1.9, D8, B-064):
 
-This script verifies that all data sources are accessible and match
-expected formats BEFORE beginning implementation. It checks:
-    - URL accessibility
-    - Content type and size
-    - IVTFF format structure
-    - EVA character presence
-    - Transcriber codes (for interlinear files)
+    - every file in data_sources/cache/ has a record, and every record a file;
+    - each file's SHA-256 is the one its record pins, and data_sources/checksums_all.txt agrees;
+    - each file's header carries the upstream version its record states, or, for a file whose header carries no
+      version line (`version_from: listing`), its file name carries the version voynich.nu's table lists;
+    - each file is IVTFF (its first line is an IVTFF header).
 
-Run this script BEFORE implementing any parsers.
+It writes the machine receipt `reports/source_verification.json` and renders the human receipt
+`reports/source_verification_report.md` from it, so the two cannot disagree. The exit status is 0 only
+when every check passes. No network access is made unless `--online` is given, which also fetches every fetched
+source from its pinned voynich.nu URL and checks the served bytes against the pin (`vcat.upstream`, roadmap item 2.1),
+recording each result in the receipt.
 
 Usage:
-    python data_sources/verify_sources.py
-
-Output:
-    - Console report with pass/fail status for each source
-    - JSON results saved to reports/source_verification.json
+    vcat-verify                      # after pip install -e ., from a checkout
+    python -m data_sources.verify_sources [--online]
 
 Example:
-    >>> from data_sources.verify_sources import verify_lsi_file
-    >>> result = verify_lsi_file("http://www.voynich.nu/data/...")
-    >>> result.is_success()
+    >>> from data_sources.verify_sources import verify_cache
+    >>> verify_cache()["_metadata"]["all_pass"]
     True
 """
 
 from __future__ import annotations
 
-import hashlib
 import json
+import os
 import re
 import sys
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
-
-import requests
 
 
 @dataclass
@@ -122,329 +119,49 @@ class VerificationResult:
         }
 
 
-def compute_sha256(content: bytes) -> str:
-    """Compute SHA256 hash of content.
-
-    Args:
-        content: Bytes to hash.
-
-    Returns:
-        Hexadecimal SHA256 hash string.
-    """
-    return hashlib.sha256(content).hexdigest()
-
-
-def fetch_content(url: str, timeout: int = 30) -> tuple[bytes, int, str]:
-    """Fetch content from URL.
-
-    Args:
-        url: URL to fetch.
-        timeout: Request timeout in seconds.
+def run_all_verifications(fetcher: Callable[[str], bytes] | None = None) -> dict:
+    """The online check: every source the registry marks fetched, fetched from its pinned URL on voynich.nu and its
+    bytes compared with the pinned SHA-256 (`vcat.upstream.check_upstream`, roadmap item 2.1). A source passes only
+    when it is served and its bytes are the pinned ones. No other host is contacted (B-087: the Phase 0 reachability
+    checks, one of them on a site the roadmap does not fetch from, are gone).
 
     Returns:
-        Tuple of (content_bytes, status_code, content_type).
-
-    Raises:
-        requests.exceptions.RequestException: On network errors.
+        Per source id its result (as `VerificationResult.to_dict`), and `_metadata` with the date and `all_pass`.
     """
-    headers = {"User-Agent": "VCAT-SourceVerifier/1.0 (Voynich Computational Analysis Toolkit)"}
-    response = requests.get(url, headers=headers, timeout=timeout)
-    content_type = response.headers.get("Content-Type", "unknown")
-    return response.content, response.status_code, content_type
-
-
-def check_ivtff_structure(content: str) -> tuple[bool, bool, int, int]:
-    """Check if content looks like IVTFF format.
-
-    Searches for IVTFF page headers and locus identifiers to
-    determine if the content is parseable.
-
-    Args:
-        content: Text content to check.
-
-    Returns:
-        Tuple of (can_parse_pages, can_parse_lines, page_count, line_count).
-    """
-    # IVTFF page headers look like: <f1r> or ## <f1r>
-    page_pattern = r"<f\d+[rv]\d*>"
-    # IVTFF line patterns look like: <f1r.P1.1;H> or similar
-    line_pattern = r"<f\d+[rv]\d*\.\w+\.\d+[;\w]*>"
-
-    pages = re.findall(page_pattern, content)
-    lines = re.findall(line_pattern, content)
-
-    unique_pages = len(set(pages))
-    line_count = len(lines)
-
-    can_parse_pages = unique_pages > 0
-    can_parse_lines = line_count > 0
-
-    return can_parse_pages, can_parse_lines, unique_pages, line_count
-
-
-def check_eva_characters(content: str) -> tuple[set[str], set[str]]:
-    """Check what EVA characters are present in content.
-
-    Extracts text from IVTFF locus lines and identifies which
-    characters are known EVA and which are unknown.
-
-    Args:
-        content: IVTFF file content.
-
-    Returns:
-        Tuple of (known_chars, unknown_chars) as sets.
-    """
-    # Basic EVA characters
-    EVA_BASIC = set("acdehiklmnopqrsty")
-    EVA_RARE = set("fgxjvbuz")
-    EVA_ALL = EVA_BASIC | EVA_RARE
-
-    # Extract text content (crude - ignores comments and metadata)
-    # Look for text after locators like <f1r.P1.1;H>
-    text_pattern = r"<f\d+[rv]\d*\.\w+\.\d+[;\w]*>\s*(.+?)(?=<|$)"
-    text_matches = re.findall(text_pattern, content)
-
-    all_text = " ".join(text_matches)
-    # Remove common separators and markers
-    all_text = re.sub(r"[.\-=,\s\[\]{}!?*@\d<>]", "", all_text.lower())
-
-    chars_found = set(all_text)
-    known = chars_found & EVA_ALL
-    unknown = chars_found - EVA_ALL
-
-    return known, unknown
-
-
-def verify_lsi_file(url: str) -> VerificationResult:
-    """Verify a Landini-Stolfi Interlinear or similar IVTFF file.
-
-    Fetches the file and checks for IVTFF structure, EVA characters,
-    and transcriber codes.
-
-    Args:
-        url: URL of the IVTFF file to verify.
-
-    Returns:
-        VerificationResult with verification details.
-    """
-    result = VerificationResult(
-        source_name="Landini-Stolfi Interlinear (LSI)",
-        url=url,
-    )
-
-    try:
-        content, status_code, content_type = fetch_content(url)
-        result.status_code = status_code
-        result.content_type = content_type
-
-        if status_code != 200:
-            result.errors.append(f"HTTP {status_code} - not accessible")
-            return result
-
-        result.accessible = True
-        result.sample_hash = compute_sha256(content)
-        result.sample_size = len(content)
-
-        # Decode and check structure
-        text = content.decode("utf-8", errors="replace")
-
-        # Check for IVTFF format
-        if "#=IVTFF" in text or "EVA" in text.upper()[:1000]:
-            result.notes.append("File appears to be in IVTFF/EVA format")
-
-        # Check for page/line structure
-        can_pages, can_lines, page_count, line_count = check_ivtff_structure(text)
-        result.can_parse_pages = can_pages
-        result.can_parse_lines = can_lines
-        result.page_count = page_count
-        result.line_count = line_count
-
-        if not can_pages:
-            result.errors.append("Cannot identify page boundaries")
-        if not can_lines:
-            result.errors.append("Cannot identify line boundaries")
-
-        # Check EVA characters
-        known_chars, unknown_chars = check_eva_characters(text)
-        result.notes.append(f"Found {len(known_chars)} known EVA characters")
-        if unknown_chars:
-            result.warnings.append(
-                f"Found {len(unknown_chars)} unknown characters: {unknown_chars}"
-            )
-
-        # Check for transcriber codes
-        transcribers = set(re.findall(r";([A-Z])\>", text))
-        if transcribers:
-            result.notes.append(f"Transcriber codes found: {sorted(transcribers)}")
-            if "H" in transcribers:
-                result.notes.append("Takahashi transcription (H) present")
-
-    except requests.exceptions.RequestException as e:
-        result.errors.append(f"Network error: {e}")
-    except Exception as e:
-        result.errors.append(f"Error: {e}")
-
-    return result
-
-
-def verify_voynich_nu(url: str) -> VerificationResult:
-    """Verify voynich.nu metadata source.
-
-    Checks that the voynich.nu website is accessible and contains
-    expected Voynich-related content.
-
-    Args:
-        url: URL on voynich.nu to verify.
-
-    Returns:
-        VerificationResult with verification details.
-    """
-    result = VerificationResult(
-        source_name="voynich.nu",
-        url=url,
-    )
-
-    try:
-        content, status_code, content_type = fetch_content(url)
-        result.status_code = status_code
-        result.content_type = content_type
-
-        if status_code != 200:
-            result.errors.append(f"HTTP {status_code} - not accessible")
-            return result
-
-        result.accessible = True
-        result.sample_hash = compute_sha256(content)
-        result.sample_size = len(content)
-
-        text = content.decode("utf-8", errors="replace")
-
-        # Check for expected content
-        if "voynich" in text.lower():
-            result.notes.append("Content appears to be Voynich-related")
-        if "transcr" in text.lower() or "transliteration" in text.lower():
-            result.notes.append("Transcription/transliteration content found")
-
-    except requests.exceptions.RequestException as e:
-        result.errors.append(f"Network error: {e}")
-    except Exception as e:
-        result.errors.append(f"Error: {e}")
-
-    return result
-
-
-def verify_stolfi(url: str) -> VerificationResult:
-    """Verify Stolfi's UNICAMP page.
-
-    Checks that Jorge Stolfi's Voynich resources at UNICAMP
-    are accessible.
-
-    Args:
-        url: URL of Stolfi's page to verify.
-
-    Returns:
-        VerificationResult with verification details.
-    """
-    result = VerificationResult(
-        source_name="Stolfi UNICAMP",
-        url=url,
-    )
-
-    try:
-        content, status_code, content_type = fetch_content(url)
-        result.status_code = status_code
-        result.content_type = content_type
-
-        if status_code != 200:
-            result.errors.append(f"HTTP {status_code} - not accessible")
-            return result
-
-        result.accessible = True
-        result.sample_hash = compute_sha256(content)
-        result.sample_size = len(content)
-
-        text = content.decode("utf-8", errors="replace")
-
-        # Look for key files
-        if "interln" in text.lower() or "concordance" in text.lower():
-            result.notes.append("Interlinear/concordance files referenced")
-        if "Takahashi" in text or "takahashi" in text.lower():
-            result.notes.append("Takahashi transcription referenced")
-
-    except requests.exceptions.RequestException as e:
-        result.errors.append(f"Network error: {e}")
-    except Exception as e:
-        result.errors.append(f"Error: {e}")
-
-    return result
-
-
-def run_all_verifications() -> dict:
-    """Run verification on all configured sources.
-
-    Verifies all primary data sources and returns results
-    as a dictionary suitable for JSON serialization.
-
-    Returns:
-        Dictionary with results for each source and metadata.
-    """
-    print("=" * 60)
-    print("VCAT Source Verification")
-    print(f"Started: {datetime.now().isoformat()}")
-    print("=" * 60)
-    print()
+    from vcat.upstream import check_upstream
+    from vcat.upstream import fetch as fetch_upstream
 
     results: dict = {}
-
-    # 1. Verify LSI file (primary source)
-    print("Checking Landini-Stolfi Interlinear file...")
-    lsi_result = verify_lsi_file("http://www.voynich.nu/data/beta/LSI_ivtff_0d.txt")
-    results["lsi"] = lsi_result.to_dict()
-    print_result(lsi_result)
-
-    # 2. Verify voynich.nu
-    print("\nChecking voynich.nu...")
-    vnu_result = verify_voynich_nu("https://www.voynich.nu/transcr.html")
-    results["voynich_nu"] = vnu_result.to_dict()
-    print_result(vnu_result)
-
-    # 3. Verify Stolfi's page
-    print("\nChecking Stolfi UNICAMP...")
-    stolfi_result = verify_stolfi("https://www.ic.unicamp.br/~stolfi/voynich/")
-    results["stolfi"] = stolfi_result.to_dict()
-    print_result(stolfi_result)
-
-    # 4. Check ZL transcription (if available)
-    print("\nChecking Zandbergen-Landini transcription...")
-    zl_result = verify_lsi_file("http://www.voynich.nu/data/ivtff/ZL3a-n.txt")
-    zl_result.source_name = "Zandbergen-Landini (ZL)"
-    results["zl"] = zl_result.to_dict()
-    print_result(zl_result)
-
-    # Summary
-    print("\n" + "=" * 60)
-    print("VERIFICATION SUMMARY")
-    print("=" * 60)
-
-    all_pass = True
-    for name, res in results.items():
-        status = "✓ PASS" if res["is_success"] else "✗ FAIL"
-        if not res["is_success"]:
-            all_pass = False
-        print(f"{name}: {status}")
-
-    print()
-    if all_pass:
-        print("All sources verified. Ready to proceed with implementation.")
-    else:
-        print("WARNING: Some sources failed verification. Review before proceeding.")
-
-    # Add metadata
+    try:
+        rows = check_upstream(fetcher or fetch_upstream)
+    except (
+        Exception
+    ) as error:  # noqa: BLE001 - a registry the check cannot read is a failed check, recorded (review be0dc250 finding 1)
+        failed = VerificationResult(source_name="registry", url="data_sources/sources.yaml")
+        failed.errors.append(f"the upstream check could not run: {type(error).__name__}: {error}")
+        results["registry"] = failed.to_dict()
+        print_result(failed)
+        rows = []
+    for row in rows:
+        result = VerificationResult(source_name=row["id"], url=row["url"])
+        result.accessible = row["status"] != "unreachable"
+        result.sample_hash = row.get("served_sha256")
+        result.sample_size = row.get("bytes")
+        if row["status"] == "unreachable":
+            result.errors.append(f"unreachable: {row.get('error')}")
+        elif row["status"] == "changed":
+            result.errors.append(
+                f"the served bytes are not the pinned ones (served {row['served_sha256']}, pinned"
+                f" {row['pinned_sha256']})"
+            )
+        else:
+            result.notes.append("served as pinned")
+        results[row["id"]] = result.to_dict()
+        print_result(result)
     results["_metadata"] = {
         "verification_date": datetime.now().isoformat(),
-        "all_pass": all_pass,
+        "all_pass": all(v["is_success"] for v in results.values()),
     }
-
     return results
 
 
@@ -486,25 +203,208 @@ def save_results(results: dict, output_path: Path) -> None:
     print(f"\nResults saved to: {output_path}")
 
 
-def main() -> None:
-    """Main entry point for the verification script."""
-    # Ensure reports directory exists
-    reports_dir = Path(__file__).parent.parent / "reports"
-    reports_dir.mkdir(exist_ok=True)
+ROOT = Path(__file__).resolve().parent.parent
+REPORTS_DIR = ROOT / "reports"
+CHECKSUMS = ROOT / "data_sources" / "checksums_all.txt"
+IVTFF_HEADER = re.compile(r"^#=IVTFF ")
 
-    # Run verifications
-    results = run_all_verifications()
 
-    # Save results
-    output_path = reports_dir / "source_verification.json"
-    save_results(results, output_path)
+def cache_name(path: Path) -> str:
+    """A cached file's path relative to data_sources/cache/, as data_sources/checksums_all.txt names it (``ZL3b-n.txt``,
+    ``latin-1/LSI_ivtff_0d.txt``), so ``sha256sum -c`` run in the cache checks every file."""
+    # The entry's own path, links NOT followed: a symbolic link in the cache is an entry of its own, never its target's
+    # (review 094aaa5d finding 1). A file outside the cache (a test's stand-in) is named by its file name.
+    entry, cache = Path(os.path.abspath(path)), Path(
+        os.path.abspath(ROOT / "data_sources" / "cache")
+    )
+    return entry.relative_to(cache).as_posix() if entry.is_relative_to(cache) else entry.name
 
-    # Exit with appropriate code
-    if results["_metadata"]["all_pass"]:
-        sys.exit(0)
-    else:
-        sys.exit(1)
+
+def read_checksums(path: Path = CHECKSUMS) -> dict[str, str]:
+    """cache path -> SHA-256, as data_sources/checksums_all.txt lists them (sha256sum format; `cache_name`)."""
+    sums: dict[str, str] = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line.strip():
+            digest, name = line.split(None, 1)
+            name = name.strip().lstrip("*")
+            # A file listed twice is an error, never resolved by the later line (reach b09d5b4b gap 3)
+            if name in sums:
+                raise ValueError(f"{path.name} lists {name} more than once")
+            sums[name] = digest
+    return sums
+
+
+def verify_cache() -> dict:
+    """Check every cached source against data_sources/sources.yaml and checksums_all.txt (offline).
+
+    Returns:
+        A receipt: one entry per source id, plus "_metadata" with the date, the mode and all_pass.
+    """
+    from vcat.sources import cached_sources
+
+    try:
+        records = cached_sources()
+    except (
+        ValueError
+    ) as error:  # a malformed registry fails the verification (review 729a5385 finding 1)
+        return {
+            "_metadata": {
+                "verification_date": datetime.now(UTC).isoformat(),
+                "mode": "cache",
+                "registry_error": str(error),
+                "unlisted_cache_files": [],
+                "checksums_without_record": [],
+                "checksum_file_error": None,
+                "all_pass": False,
+            }
+        }
+    try:
+        checksums = read_checksums()
+        checksum_error = None
+    except ValueError as error:  # a duplicated entry fails the verification, it does not stop it
+        checksums, checksum_error = {}, str(error)
+    results: dict = {}
+    listed = {cache_name(r.path) for r in records}
+    cache = ROOT / "data_sources" / "cache"
+    for source in records:
+        errors: list[str] = []
+        actual = source.actual_sha256()
+        if actual is None:
+            errors.append(f"{source.file} is missing")
+        else:
+            if actual != source.sha256:
+                errors.append("SHA-256 is not the one sources.yaml pins")
+            if checksums.get(cache_name(source.path)) != actual:
+                errors.append("data_sources/checksums_all.txt does not list this SHA-256")
+            # the whole preamble, every line before the first page header, not a fixed number of lines (reach e85b7f33
+            # gap 1): a version comment anywhere in it is the file's own
+            lines = source.path.read_text(encoding="utf-8", errors="replace").splitlines()
+            head = lines[
+                : next((i for i, line in enumerate(lines) if line.startswith("<")), len(lines))
+            ]
+            if not head or not IVTFF_HEADER.match(head[0]):
+                errors.append("the first line is not an IVTFF header")
+            versions = [line[1:].strip() for line in head if line.startswith("#")]
+            if source.version_from == "listing":
+                # the header carries no version line, so the version is the upstream table's, which the file name
+                # also carries (S12)
+                if versions[1:]:
+                    errors.append(
+                        "the header has comment lines; its version is read from them, not the listing"
+                    )
+                token = source.upstream_version.removeprefix("v. ")
+                if not token or token not in Path(source.file).name:
+                    errors.append(
+                        f"the file name does not carry the listed version {source.upstream_version!r}"
+                    )
+            elif (
+                source.upstream_version not in versions
+            ):  # the line verbatim (reach b09d5b4b gap 2)
+                errors.append(f"the header does not carry {source.upstream_version!r}")
+        results[source.id] = {
+            "file": source.file,
+            "url": source.url,
+            "sha256": actual,
+            "upstream_version": source.upstream_version,
+            "errors": errors,
+            "is_success": not errors,
+        }
+    # every file anywhere under the cache, by its path there (S13: LSI is under latin-1/)
+    unlisted = sorted(
+        cache_name(p) for p in cache.rglob("*") if p.is_file() and cache_name(p) not in listed
+    )
+    stray = sorted(set(checksums) - listed)
+    results["_metadata"] = {
+        "verification_date": datetime.now(UTC).isoformat(),
+        "mode": "cache",
+        "unlisted_cache_files": unlisted,
+        "checksums_without_record": stray,
+        "checksum_file_error": checksum_error,
+        "all_pass": all(r["is_success"] for r in results.values())
+        and not unlisted
+        and not stray
+        and not checksum_error,
+    }
+    return results
+
+
+def render_report(results: dict) -> str:
+    """The human receipt, rendered from the machine receipt (B-064): it states exactly what the JSON says."""
+    meta = results["_metadata"]
+    lines = [
+        "# Source verification receipt",
+        "",
+        "Rendered by `vcat-verify` from `reports/source_verification.json`; do not edit by hand.",
+        "",
+        f"- Date: {meta['verification_date']}",
+        f"- Mode: {meta['mode']}",
+        f"- Result: {'PASS' if meta['all_pass'] else 'FAIL'}",
+        "",
+        "| source | file | upstream version | SHA-256 | result |",
+        "|---|---|---|---|---|",
+    ]
+    for key, entry in results.items():
+        if key.startswith("_") or "file" not in entry:
+            continue
+        verdict = "pass" if entry["is_success"] else "FAIL: " + "; ".join(entry["errors"])
+        lines.append(
+            f"| {key} | `{entry['file']}` | {entry['upstream_version']} | `{entry['sha256']}` | {verdict} |"
+        )
+    for label, names in (
+        ("Cache files without a record", meta["unlisted_cache_files"]),
+        ("Checksums without a record", meta["checksums_without_record"]),
+    ):
+        if names:
+            lines += ["", f"{label}: " + ", ".join(f"`{n}`" for n in names)]
+    if meta.get("registry_error"):
+        lines += ["", f"data_sources/sources.yaml: {meta['registry_error']}"]
+    if meta.get("checksum_file_error"):
+        lines += ["", f"Checksums file: {meta['checksum_file_error']}"]
+    online = {k: v for k, v in results.items() if not k.startswith("_") and "file" not in v}
+    if online:
+        lines += ["", "## Upstream: served bytes against the pins (`--online`)", ""]
+        for key, entry in online.items():
+            lines.append(
+                f"- {key}: {'pass' if entry['is_success'] else 'FAIL'} ({entry.get('url')})"
+            )
+    return "\n".join(lines) + "\n"
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Verify the cached sources, write both receipts, and return 0 only when every check passes."""
+    import argparse
+
+    arg_parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[1] if __doc__ else None)
+    arg_parser.add_argument(
+        "--online",
+        action="store_true",
+        help="also check every fetched source's served bytes against its pin (network access, voynich.nu only)",
+    )
+    arg_parser.add_argument("--reports-dir", type=Path, default=REPORTS_DIR)
+    args = arg_parser.parse_args(argv)
+
+    results = verify_cache()
+    if args.online:
+        online = run_all_verifications()
+        online.pop("_metadata")
+        results.update({f"online_{k}": v for k, v in online.items()})
+        results["_metadata"]["mode"] = "cache+online"
+        # The online checks add to the cache verification, never replace its verdict (review cc2c2127 finding 1)
+        results["_metadata"]["all_pass"] = bool(results["_metadata"]["all_pass"]) and all(
+            v["is_success"] for k, v in results.items() if k.startswith("online_")
+        )
+
+    args.reports_dir.mkdir(parents=True, exist_ok=True)
+    save_results(results, args.reports_dir / "source_verification.json")
+    (args.reports_dir / "source_verification_report.md").write_text(
+        render_report(results), encoding="utf-8"
+    )
+    for key, entry in results.items():
+        if not key.startswith("_"):
+            print(f"{key}: {'PASS' if entry['is_success'] else 'FAIL'} {entry.get('errors') or ''}")
+    print("ALL PASS" if results["_metadata"]["all_pass"] else "VERIFICATION FAILED")
+    return 0 if results["_metadata"]["all_pass"] else 1
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

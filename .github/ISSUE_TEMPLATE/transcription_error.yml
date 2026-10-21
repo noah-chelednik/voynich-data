@@ -1,0 +1,42 @@
+name: Transcription error
+description: A reading the source transliteration itself gets wrong (VCAT reproduces it faithfully).
+title: "[transcription error] "
+labels: ["transcription error"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        VCAT distributes the transliterations faithfully and never corrects one itself
+        ([STABILITY.md](https://github.com/noah-chelednik/voynich-data/blob/main/STABILITY.md), Corrections). A reading
+        you think is wrong in the source must be reported upstream, to the transliteration's maintainer (for the ZL file,
+        through voynich.nu). Use this issue to record the report: when the upstream file is corrected, VCAT takes the new
+        version as a new source (data_sources/sources.yaml) and the change reaches the datasets in a release. If VCAT's
+        data differs from its source, that is a data bug: please use the "Data bug" template instead.
+  - type: input
+    id: source
+    attributes:
+      label: Transliteration and version
+      description: For example ZL, version 3b of 13/05/2025 (the version line of data_sources/sources.yaml).
+    validations:
+      required: true
+  - type: input
+    id: line_id
+    attributes:
+      label: line_id
+      description: For example f1r:5.
+    validations:
+      required: true
+  - type: textarea
+    id: reading
+    attributes:
+      label: The reading and what you see in the manuscript
+      description: The source's reading, the reading you propose, and the evidence (a scan reference).
+    validations:
+      required: true
+  - type: input
+    id: upstream
+    attributes:
+      label: Where you reported it upstream
+      description: A link or the date you wrote to the maintainer.
+    validations:
+      required: true

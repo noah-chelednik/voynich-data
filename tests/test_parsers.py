@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from parsers import IVTFFParser, PageVariables, parse_ivtff
+from vcat.loss_accounting import census_source
 
 
 class TestIVTFFParser:
@@ -44,14 +45,18 @@ class TestIVTFFParser:
         assert "fachys" in pages[0].loci[0].text
 
     def test_extract_text_removes_comments(self):
-        """Test that text extraction removes inline comments."""
+        """Test that text extraction removes in-line comments and keeps ligature glyphs.
+
+        Braces mark a ligature in IVTFF 2.0 (D1): the old version of this test asserted that
+        ``{...}`` was deleted as a comment, which is the defect itself.
+        """
         parser = IVTFFParser()
 
-        raw = "fachys.ykal{comment here}.ar"
+        raw = "fachys.ykal<!comment here>.ar.dlo{ct}o"
         clean = parser.extract_text(raw)
 
-        assert "{" not in clean
         assert "comment" not in clean
+        assert clean == "fachys.ykal.ar.dlocto"
         assert "fachys" in clean
 
     def test_extract_text_handles_alternatives(self):
@@ -95,7 +100,7 @@ class TestIVTFFParser:
         assert pages[2].page_id == "f2r"
 
     def test_format_version_extracted(self):
-        """Test that format version is extracted."""
+        """The file header's alphabet, version and remainder are separate (IVTFF 2.0 Table 4)."""
         content = """#=IVTFF Eva- 2.0 M 5
 <f1r>      <! $Q=A>
 <f1r.1,@P0>       test
@@ -103,7 +108,9 @@ class TestIVTFFParser:
         parser = IVTFFParser()
         list(parser.parse_string(content))
 
-        assert parser.format_version == "Eva-"
+        assert parser.alphabet == "Eva-"
+        assert parser.format_version == "2.0"
+        assert parser.format_options == "M 5"
 
 
 class TestPageVariables:
@@ -121,7 +128,7 @@ class TestPageVariables:
         assert pv.illustration == "H"
         assert pv.language == "A"
         assert pv.hand == "1"
-        assert pv.cluster == 2
+        assert pv.cluster == "2"  # Currier's hand, as written (B-013, DECISIONS Q27)
         assert pv.extraneous == "V"
 
     def test_parse_partial_variables(self):
@@ -140,25 +147,32 @@ class TestIntegration:
 
     @pytest.fixture
     def zl_file(self):
-        """Path to ZL transcription file."""
-        path = Path(__file__).parent.parent / "data_sources/raw_sources/ZL3b-n.txt"
-        if not path.exists():
-            pytest.skip("ZL transcription file not found")
+        """Path to the cached ZL transcription. A missing source FAILS, never skips."""
+        path = Path(__file__).parent.parent / "data_sources/cache/ZL3b-n.txt"
+        if not path.is_file():
+            pytest.fail(f"ZL transcription not found: {path}")
         return path
 
     def test_parse_real_file(self, zl_file):
         """Test parsing the actual ZL file."""
         pages = parse_ivtff(zl_file)
+        census = census_source(zl_file)
 
-        assert len(pages) > 200  # Should have 226 pages
+        assert pages
         assert all(p.page_id for p in pages)
+        page_ids = [p.page_id for p in pages]
+        assert len(page_ids) == len(set(page_ids))
+        assert set(page_ids) <= set(census.pages)
 
-    def test_all_pages_have_loci(self, zl_file):
-        """Test that most pages have at least one locus."""
+    def test_pages_with_loci_come_from_source(self, zl_file):
+        """Every parsed locus is a source locus of its own page (loss: test_loss_accounting)."""
         pages = parse_ivtff(zl_file)
+        census = census_source(zl_file)
 
-        pages_with_loci = sum(1 for p in pages if len(p.loci) > 0)
-        assert pages_with_loci > 200
+        emitted = {f"{p.page_id}:{locus.locus_number}" for p in pages for locus in p.loci}
+        assert emitted
+        assert emitted <= set(census.loci)
+        assert all(locus.page_id == p.page_id for p in pages for locus in p.loci)
 
     def test_locus_ids_unique(self, zl_file):
         """Test that all locus IDs are unique."""

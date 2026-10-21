@@ -11,6 +11,7 @@ This module tests:
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -107,23 +108,20 @@ class TestValidateAgainstSchema:
         assert is_valid is False
         assert len(errors) > 0
 
-    def test_validate_invalid_line_number(self):
-        """Test validation fails for invalid line_number."""
-        record = {
-            "page_id": "f1r",
-            "line_number": 0,  # Must be >= 1
-            "line_id": "f1r:0",
-            "text": "test",
-            "text_clean": "test",
-            "line_type": "paragraph",
-            "source": "test",
-            "source_version": "abc",
-        }
+    def test_validate_invalid_line_number(self, valid_transcription_record):
+        """A record valid in every field but `line_number` 0 fails, for its line number (B-098, AT7 F2: the old record
+        lacked required fields, so it failed whatever the line number's rule)."""
+        assert validate_against_schema(
+            valid_transcription_record, "transcription_lines.schema.json"
+        )[0]
+        record = dict(valid_transcription_record, line_number=0)  # must be >= 1
 
         is_valid, errors = validate_against_schema(record, "transcription_lines.schema.json")
 
         assert is_valid is False
-        assert len(errors) > 0
+        assert errors and all(
+            "line_number" in error or "0 is less than" in error for error in errors
+        ), errors
 
     def test_validate_invalid_enum_value(self):
         """Test validation fails for invalid enum value."""
@@ -209,21 +207,21 @@ class TestValidateTranscriptionLines:
 class TestValidateMismatchIndex:
     """Tests for validate_mismatch_index convenience function."""
 
-    def test_validate_valid_mismatch_record(self, sample_mismatch_records: list[dict[str, Any]]):
-        """Test validating valid mismatch index data."""
-        is_valid, errors = validate_mismatch_index(sample_mismatch_records)
+    @staticmethod
+    def committed_rows() -> list[dict[str, Any]]:
+        path = Path(__file__).resolve().parent.parent / "output" / "mismatch_index.jsonl"
+        return [json.loads(line) for line in path.read_text().splitlines()]
+
+    def test_validate_valid_mismatch_record(self):
+        """The committed index rows (built by builders.build_mismatch_index) are valid."""
+        is_valid, errors = validate_mismatch_index(self.committed_rows())
 
         assert is_valid is True
         assert errors == []
 
     def test_validate_invalid_status(self):
         """Test validation fails for invalid status value."""
-        record = {
-            "page_id": "f1r",
-            "line_number": 1,
-            "line_id": "f1r:1",
-            "status": "invalid_status",  # Not in enum
-        }
+        record = {**self.committed_rows()[0], "status": "invalid_status"}
 
         is_valid, errors = validate_mismatch_index([record])
 
@@ -231,28 +229,19 @@ class TestValidateMismatchIndex:
         assert any("status" in e for e in errors)
 
     def test_validate_all_status_values(self):
-        """Test that all valid status values pass."""
-        valid_statuses = [
-            "ok",
-            "content_mismatch",
-            "line_count_mismatch",
-            "missing_in_primary",
-            "missing_in_secondary",
-            "reflow",
-            "parse_error",
-            "page_missing",
-            "other",
-        ]
+        """Every status the builder writes is valid, and the 0.2.3 statuses are not (item 1.8)."""
+        from builders.build_mismatch_index import STATUSES
 
-        for status in valid_statuses:
-            record = {
-                "page_id": "f1r",
-                "line_number": 1,
-                "line_id": "f1r:1",
-                "status": status,
-            }
-            is_valid, errors = validate_mismatch_index([record])
+        # the whole clause (reach 1c53841b gap 4): every committed row is valid, an invalid status is not
+        rows = self.committed_rows()
+        assert validate_mismatch_index(rows) == (True, [])
+        assert not validate_mismatch_index([{**rows[0], "status": "invalid_status"}])[0]
+        template = rows[0]
+        for status in STATUSES:
+            is_valid, errors = validate_mismatch_index([{**template, "status": status}])
             assert is_valid is True, f"Status '{status}' should be valid"
+        for status in ("ok", "content_mismatch", "high_similarity"):
+            assert not validate_mismatch_index([{**template, "status": status}])[0], status
 
 
 class TestSchemaFiles:
@@ -297,7 +286,7 @@ class TestSchemaFiles:
 class TestEdgeCases:
     """Tests for edge cases in validation."""
 
-    def test_validate_with_null_values(self):
+    def test_validate_with_null_values(self, structured_layer):
         """Test validation handles null values correctly for nullable fields."""
         record = {
             "page_id": "f1r",
@@ -312,6 +301,7 @@ class TestEdgeCases:
             "currier_language": None,  # Nullable field
             "source": "test",
             "source_version": "abc",
+            **structured_layer("test"),
         }
 
         is_valid, errors = validate_against_schema(record, "transcription_lines.schema.json")
@@ -328,7 +318,7 @@ class TestEdgeCases:
         # Schema doesn't restrict additional properties
         assert is_valid is True
 
-    def test_validate_foldout_page_id(self):
+    def test_validate_foldout_page_id(self, structured_layer):
         """Test validation accepts foldout page IDs."""
         record = {
             "page_id": "f85v3",  # Foldout panel
@@ -340,6 +330,7 @@ class TestEdgeCases:
             "line_type": "paragraph",
             "source": "test",
             "source_version": "abc",
+            **structured_layer("test"),
         }
 
         is_valid, errors = validate_against_schema(record, "transcription_lines.schema.json")

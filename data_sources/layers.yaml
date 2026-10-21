@@ -1,0 +1,120 @@
+# The layers of the datasets that are not the transliterations' text itself (roadmap item 2.8): each field that records a
+# classification, its source, who it is attributed to and its own license. A layer is either the source's (a value a
+# transliteration file states, as written or named) or VCAT's (a judgement VCAT makes). The metadata builder publishes
+# this table as the `layers` configuration; the suite checks it against the datasets' fields (tests/test_layers.py).
+#
+# Fields:
+#   layer        the layer's name
+#   fields       the dataset fields it fills, as `<dataset>:<field>`
+#   kind         `source` (stated by a transliteration) or `vcat` (VCAT's judgement)
+#   source       where its values come from
+#   attribution  whose classification it is
+#   license      the license of its values: CC0-1.0 for what the sources state (voynich.nu's CC0), CC-BY-4.0 for VCAT's
+#
+# `{metadata_source}` stands for the transliteration the metadata is built from: ZL for the published datasets, another
+# source's id for a build from it (review 7454c2f9 finding 3), so a layer never names a file its values did not come from.
+# `{metadata_hands}` is whose hands that file's `$H` gives: Davis's from IVTFF file version 1.7, Currier's in an older
+# file such as LSI (1.5), which defines `$H` as Currier's hand (review 69aa93cc finding 1).
+
+layers:
+  - layer: section
+    fields: [voynich-manuscript-metadata:pages.section, voynich-manuscript-metadata:folios.section,
+             voynich-manuscript-metadata:quires.sections]
+    kind: vcat
+    source: VCAT's ranges of folio numbers (`parsers/metadata_parser.py`, SECTION_MAPPING), with a confidence and a dispute
+      flag at their boundaries
+    attribution: VCAT's judgement, after the classifications described on voynich.nu; not a statement of any source
+    license: CC-BY-4.0
+
+  - layer: section_name
+    fields: [voynich-eva:section, voynich-eva:words.section]
+    kind: source
+    source: the page header's illustration type (`$I`) of the ZL transliteration, given VCAT's name for its code (one name
+      per code, `docs/data_model.md`)
+    attribution: René Zandbergen's illustration types, as ZL records them
+    license: CC0-1.0
+
+  - layer: illustration_type
+    fields: [voynich-eva:illustration_type, voynich-manuscript-metadata:pages.illustration_type]
+    kind: source
+    source: the page header's illustration type (`$I`), as written, of the ZL transliteration (voynich-eva) and of
+      {metadata_source} (the metadata)
+    attribution: René Zandbergen's illustration types, as ZL records them (voynich-eva) and {metadata_source} (the
+      metadata)
+    license: CC0-1.0
+
+  - layer: hand
+    fields: [voynich-eva:hand, voynich-eva:words.hand, voynich-manuscript-metadata:pages.hand]
+    kind: source
+    source: the page header's hand (`$H`), as written, of the ZL transliteration (voynich-eva) and of {metadata_source}
+      (the metadata); from file version 1.7, IVTFF 2.0 Table 6 reserves `$H` for the hands Lisa Fagin Davis identified,
+      and an older file defines its own `$H`
+    attribution: Lisa Fagin Davis's scribal hands, after Davis (2020), as ZL records them (voynich-eva); {metadata_hands},
+      as {metadata_source} records them (the metadata)
+    license: CC0-1.0
+
+  - layer: currier_language
+    fields: [voynich-eva:currier_language, voynich-eva:words.currier_language, voynich-manuscript-metadata:pages.currier_language,
+             voynich-manuscript-metadata:folios.currier_language]
+    kind: source
+    source: the page header's language (`$L`), as written, of the ZL transliteration (voynich-eva) and of
+      {metadata_source} (the metadata); a folio's is the one most of its pages have
+    attribution: Prescott Currier's languages A and B, as ZL records them (voynich-eva) and {metadata_source} (the
+      metadata)
+    license: CC0-1.0
+
+  - layer: physical_structure
+    fields: [voynich-eva:quire, voynich-eva:words.quire, voynich-manuscript-metadata:pages.quire_id, voynich-manuscript-metadata:pages.quire_letter,
+             voynich-manuscript-metadata:pages.page_in_quire, voynich-manuscript-metadata:folios.quire_id,
+             voynich-manuscript-metadata:quires.quire_letter, voynich-manuscript-metadata:bifolia.quire_id,
+             voynich-manuscript-metadata:bifolia.bifolio_number, voynich-manuscript-metadata:bifolia.is_complete,
+             voynich-manuscript-metadata:page_orders.order]
+    kind: source
+    source: the page headers' quire (`$Q`), page in quire (`$P`) and bifolio (`$B`) of {metadata_source} (the metadata; the
+      ZL transliteration's `$Q` for voynich-eva), and the order of its pages
+    attribution: René Zandbergen's codicological description, as {metadata_source} records it
+    license: CC0-1.0
+
+  - layer: comparison
+    fields: [voynich-transcription-mismatch:status, voynich-transcription-mismatch:similarity_score]
+    kind: vcat
+    source: VCAT's comparison of ZL and IT under the profile `analysis-v1` (`vcat/comparison.py`)
+    attribution: VCAT's judgement; the texts compared are the sources'
+    license: CC-BY-4.0
+
+  - layer: missing_folios
+    fields: [voynich-manuscript-metadata:pages.is_missing, voynich-manuscript-metadata:folios.is_missing,
+             voynich-manuscript-metadata:quires.is_complete]
+    kind: vcat
+    source: VCAT's table of the folio numbers missing from the manuscript (`parsers/metadata_parser.py`, MISSING_FOLIOS), and
+      a quire's completeness read from it
+    attribution: VCAT's judgement, after the gaps in the foliation described on voynich.nu; not a statement of any source
+    license: CC-BY-4.0
+
+  - layer: foldouts
+    fields: [voynich-manuscript-metadata:pages.is_foldout_panel, voynich-manuscript-metadata:folios.is_foldout]
+    kind: source
+    source: the page names of {metadata_source} (a page named with a panel number, `f67r1`, is a foldout panel, and a folio
+      with a panel or more than one verso page is a foldout)
+    attribution: René Zandbergen's naming of the foldout panels, as {metadata_source} records it
+    license: CC0-1.0
+
+  - layer: iiif_links
+    fields: [voynich-manuscript-metadata:page_canvases.canvas_id, voynich-manuscript-metadata:page_canvases.coverage]
+    kind: vcat
+    source: VCAT's reading of the canvas labels of Yale University Library's IIIF manifest of Beinecke MS 408
+      (`vcat/iiif.py`; the canvases in `data_sources/iiif/yale-2002046-canvases.json`, pinned to the manifest's SHA-256)
+    attribution: VCAT's mapping of Yale's canvas labels to the page names; the labels and the images are Yale University
+      Library's, linked, never copied
+    license: CC-BY-4.0
+
+  - layer: variants
+    fields: [voynich-transliterations:locus_variants.agreement, voynich-transliterations:locus_variants.distinct_readings,
+             voynich-transliterations:locus_variants.majority_baseline, voynich-transliterations:word_alignments.frame_reader,
+             voynich-transliterations:word_alignments.operations, voynich-transliterations:word_alignments.matches,
+             voynich-transliterations:word_alignments.word_agreement]
+    kind: vcat
+    source: VCAT's comparison of the EVA readers of each locus under the profile `analysis-v1` and its alignment of their
+      words to the frame reader's (`vcat/variants.py`); the readings compared are the sources'
+    attribution: VCAT's comparison; not a consensus, and the majority baseline is not a reading
+    license: CC-BY-4.0

@@ -1,26 +1,19 @@
-VCAT Dataset License (Research Use)
+voynich-transcription-mismatch: license
 
-Dataset structure, processing code, and documentation:
-  MIT License — Copyright (c) 2026 Noah Chelednik
+Dataset: Creative Commons Attribution 4.0 International (CC-BY-4.0)
+  https://creativecommons.org/licenses/by/4.0/legalcode
+
+  VCAT's comparison (the verdicts, statuses and similarity scores) is
+  CC-BY-4.0. The text of the rows is read from the Zandbergen-Landini (ZL) and
+  Takahashi (IT) transliterations, and the rows record whether CD, FG and GC
+  hold each locus (none of their text). voynich.nu makes all five
+  transliterations available under CC0 (CC0-1.0); the statement was read at
+  its source on 2026-10-17 and is recorded in data_sources/sources.yaml and
+  docs/SOURCES_LICENSE.md of the repository.
+
+  Please cite the transliterators named in the dataset card in published work.
+
+Code that builds the data: MIT License
   https://github.com/noah-chelednik/voynich-data/blob/main/LICENSE
 
-Underlying transcription data:
-  This dataset is derived from scholarly transcriptions of the Voynich
-  Manuscript (Beinecke MS 408, Yale University) that are publicly
-  distributed for research, primarily the Zandbergen-Landini (ZL)
-  transcription from https://www.voynich.nu/. The transcription authors
-  have not published explicit license statements.
-
-  This dataset is therefore released as a RESEARCH RESOURCE:
-
-  1. Research and educational use is the intended purpose.
-  2. Cite the original transcribers in any published work
-     (see the Citation section of the dataset card).
-  3. For commercial applications, verify rights independently and
-     contact the transcription authors.
-
-  Full provenance for all transcription sources:
-  https://github.com/noah-chelednik/voynich-data/blob/main/docs/SOURCES_LICENSE.md
-
-The manuscript itself is in the public domain. Images of the manuscript
-are provided by the Beinecke Rare Book & Manuscript Library.
+The manuscript itself is in the public domain.

@@ -2,18 +2,25 @@
 """
 Fetch and verify VCAT source files.
 
-This script downloads the required transcription files and verifies their
-SHA256 hashes match expected values. It fails hard if verification fails.
+It fetches each source data_sources/sources.yaml marks url_fetched (every cached
+source since S12) that is missing from data_sources/cache/, and checks every
+such file against its pinned SHA-256. It fails if a check fails.
 
 Usage:
     python scripts/fetch_sources.py
 
-The script is idempotent: if files already exist and verify correctly,
-it does nothing. If files are missing or corrupted, it fetches fresh copies.
+The script is idempotent: a present file with the pinned hash is left alone. A
+present file with another hash is reported and left in place (the cache is
+never edited); a missing one is downloaded to a temporary file beside it and
+moved into the cache only when it has the pinned hash, so a failed download
+leaves the cache as it was.
 """
 
 import hashlib
+import os
 import sys
+import tempfile
+from http.client import HTTPException
 from pathlib import Path
 from urllib.error import URLError
 from urllib.request import Request, urlopen
@@ -22,15 +29,22 @@ from urllib.request import Request, urlopen
 # SOURCE DEFINITIONS
 # =============================================================================
 
-# The expected hash will be determined after first successful download.
-# For now, we'll compute and display the hash, then you can lock it.
+# The sources to fetch are the records of data_sources/sources.yaml marked url_fetched: true, each with
+# its URL and pinned SHA-256 (D8: one record of the sources).
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from vcat.sources import cached_sources, load_sources  # noqa: E402
+
+_FETCHED = {entry["id"] for entry in load_sources()["cached"] if entry.get("url_fetched")}
 SOURCES = {
-    "ZL3b-n.txt": {
-        "url": "https://www.voynich.nu/data/ZL3b-n.txt",
-        # Hash verified 2026-01-18
-        "sha256": "bf5b6d4ac1e3a51b1847a9c388318d609020441ccd56984c901c32b09beccafc",
-        "description": "Zandbergen-Landini EVA transcription v3b",
-    },
+    Path(source.file).name: {
+        "url": source.url,
+        "sha256": source.sha256,
+        "description": source.name,
+        # where under the cache it goes: LSI, not ASCII, sits in latin-1/ (S13)
+        "path": Path(source.file).relative_to("data_sources/cache").as_posix(),
+    }
+    for source in cached_sources()
+    if source.id in _FETCHED
 }
 
 CACHE_DIR = Path(__file__).parent.parent / "data_sources" / "cache"
@@ -61,9 +75,39 @@ def fetch_file(url: str, dest: Path) -> bool:
         with urlopen(request) as response:
             dest.write_bytes(response.read())
         return True
-    except URLError as e:
+    except (URLError, HTTPException, OSError) as e:  # a refused, failed or truncated download
         print(f"  ERROR: Failed to download: {e}")
         return False
+
+
+def install(url: str, filepath: Path, expected_hash: str) -> bool:
+    """Download `url` into a temporary file of this run's own beside `filepath`, and move it in only once its SHA-256 is
+    the pinned one. A shared name would let an overlapping run replace the bytes between the hash and the move (review
+    3eacd8a0 finding 1); the temporary file is removed on every other outcome, an exception included, so a failed or
+    interrupted download leaves the cache as it was (review 0ba7d188 finding 1)."""
+    handle, name = tempfile.mkstemp(
+        dir=filepath.parent, prefix=f".{filepath.name}.", suffix=".part"
+    )
+    os.close(handle)
+    partial = Path(name)
+    try:
+        if not fetch_file(url, partial):
+            print(f"  ✗ FAILED to fetch {filepath.name}")
+            return False
+        actual_hash = compute_sha256(partial)
+        if (
+            actual_hash != expected_hash
+        ):  # every record pins one (the registry rejects a record that does not)
+            print("  ✗ VERIFICATION FAILED after download; nothing was written to the cache")
+            print(f"    Expected: {expected_hash}")
+            print(f"    Actual:   {actual_hash}")
+            return False
+        partial.replace(filepath)
+        print("  ✓ Downloaded and verified")
+        print(f"  SHA256: {actual_hash}")
+        return True
+    finally:
+        partial.unlink(missing_ok=True)  # gone already when it was moved in
 
 
 def main():
@@ -77,7 +121,8 @@ def main():
     all_ok = True
 
     for filename, info in SOURCES.items():
-        filepath = CACHE_DIR / filename
+        filepath = CACHE_DIR / info.get("path", filename)
+        filepath.parent.mkdir(parents=True, exist_ok=True)
         expected_hash = info["sha256"]
 
         print(f"Checking {filename}...")
@@ -94,10 +139,12 @@ def main():
                 print(f"  SHA256: {actual_hash}")
                 continue
             elif expected_hash:
-                print("  ⚠ File exists but hash mismatch!")
-                print(f"    Expected: {expected_hash[:16]}...")
-                print(f"    Actual:   {actual_hash[:16]}...")
-                filepath.unlink()
+                # The cached file is evidence and is never removed: report it and stop
+                print("  ✗ File exists but its SHA-256 is not the pinned one; left in place")
+                print(f"    Expected: {expected_hash}")
+                print(f"    Actual:   {actual_hash}")
+                all_ok = False
+                continue
             else:
                 # No expected hash, file exists
                 print("  ✓ File exists")
@@ -105,28 +152,9 @@ def main():
                 print("  NOTE: Lock this hash in fetch_sources.py for reproducibility")
                 continue
 
-        # File doesn't exist or was deleted, fetch it
-        if not fetch_file(info["url"], filepath):
-            print(f"  ✗ FAILED to fetch {filename}")
+        # File doesn't exist or was deleted: fetch, verify and install it
+        if not install(info["url"], filepath, expected_hash):
             all_ok = False
-            continue
-
-        # Compute and display hash
-        actual_hash = compute_sha256(filepath)
-
-        if expected_hash:
-            if actual_hash == expected_hash:
-                print("  ✓ Downloaded and verified")
-                print(f"  SHA256: {actual_hash}")
-            else:
-                print("  ✗ VERIFICATION FAILED after download!")
-                print(f"    Expected: {expected_hash}")
-                print(f"    Actual:   {actual_hash}")
-                all_ok = False
-        else:
-            print("  ✓ Downloaded successfully")
-            print(f"  SHA256: {actual_hash}")
-            print("  NOTE: Lock this hash in fetch_sources.py for reproducibility")
 
     print()
     print("=" * 60)

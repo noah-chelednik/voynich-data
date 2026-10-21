@@ -1,471 +1,297 @@
 """
-Mismatch Index Builder for VCAT.
+Mismatch index builder (roadmap item 1.8)
+=========================================
 
-Compares transcription sources to identify disagreements and create
-a cross-transcription alignment dataset.
+One row per locus id found in either of the two EVA transliterations, ZL (Zandbergen, ``ZL3b-n.txt``) and IT (Takahashi,
+``IT_ivtff_1a.txt``): both raw texts, both readings under the named comparison profile, and the verdict of
+``vcat.comparison.compare`` (``identical``, ``same_reading``, ``alternate_reading``, ``different``), or ``zl_only`` and
+``it_only`` for a locus only one source has. The other cached sources (CD, FG, GC) use other alphabets and are recorded as
+present or absent only; variant tables across all sources are roadmap item 2.7.
 
-Primary comparison: ZL (Zandbergen-Landini) vs IT (Takahashi) - both EVA-based
-Secondary tracking: CD, FG, GC presence/absence
+Never silent (principle 3, B-038): every parser warning of either source is in the report, and a locus the parser reported
+instead of emitting is listed there, not dropped from the comparison unseen. The numbers in the report are the build's; the
+README, the dataset card and the CHANGELOG quote them (the erratum of item 1.8).
 """
 
+from __future__ import annotations
+
+import hashlib
 import json
 import logging
+import statistics
+from collections import Counter
 from dataclasses import asdict, dataclass, field
-from difflib import SequenceMatcher
 from pathlib import Path
 from typing import Any
 
-from parsers.ivtff_parser import IVTFFParser
+from parsers import page_order_key
+from parsers.ivtff_parser import IVTFFParser, Locus
+from vcat.comparison import AGREEING, COMPARISON_PROFILE, VERDICTS, compare
+from vcat.loss_accounting import CACHE_DIR as LOSS_CACHE_DIR
+from vcat.profiles import get_profile
+from vcat.sources import load_sources, require_licensed, source_file
 
 logger = logging.getLogger(__name__)
 
-# Paths
 PROJECT_ROOT = Path(__file__).parent.parent
-CACHE_DIR = PROJECT_ROOT / "data_sources" / "cache"
+CACHE_DIR = LOSS_CACHE_DIR
 OUTPUT_DIR = PROJECT_ROOT / "output"
 
-
-@dataclass
-class TranscriptionLine:
-    """A single line from a transcription."""
-
-    page_id: str
-    line_number: int
-    line_id: str
-    text_raw: str
-    text_clean: str
-    source_id: str
+#: The two compared sources, and the others recorded as present or absent: every source the mismatch dataset's record in
+#: data_sources/sources.yaml names, by its file there (AB2 F3, B-081), ZL and IT first.
+_DATASET = next(
+    d for d in load_sources()["datasets"] if d["name"] == "voynich-transcription-mismatch"
+)
+SOURCES = {sid.lower(): source_file(sid).name for sid in _DATASET["sources"]}
+ZL_ONLY = "zl_only"
+IT_ONLY = "it_only"
+STATUSES = (*VERDICTS, ZL_ONLY, IT_ONLY)
 
 
 @dataclass
 class MismatchRecord:
-    """Record of comparison between transcription sources for a single line."""
+    """The comparison of one locus id between ZL and IT."""
 
-    # Identifiers
     page_id: str
     line_number: int
     line_id: str
-
-    # Primary comparison (EVA-based: ZL vs IT)
-    zl_text: str | None = None
-    it_text: str | None = None
-
-    # Secondary transcriptions (presence/absence + text)
-    cd_text: str | None = None  # Currier alphabet
-    fg_text: str | None = None  # FSG alphabet
-    gc_text: str | None = None  # v101 alphabet
-
-    # Comparison results
-    status: str = (
-        "unknown"  # exact_match, normalized_match, content_mismatch, missing_some, zl_only, it_only
-    )
-    eva_agreement: bool | None = None
+    status: str
+    comparison_profile: str
+    zl_text_raw: str | None = None
+    it_text_raw: str | None = None
+    zl_reading: str | None = None
+    it_reading: str | None = None
+    zl_locus_type: str | None = None
+    it_locus_type: str | None = None
+    zl_source_line: int | None = None
+    it_source_line: int | None = None
     similarity_score: float | None = None
-
-    # Source tracking
     sources_present: list[str] = field(default_factory=list)
-    sources_missing: list[str] = field(default_factory=list)
-
-    # Notes
-    notes: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary for JSON serialization."""
         return asdict(self)
 
 
-class MismatchIndexBuilder:
-    """Builder for transcription mismatch index."""
+@dataclass
+class LoadedSource:
+    """One parsed source: its loci by id and what the parser reported."""
 
-    # Transcription configs
-    TRANSCRIPTION_CONFIGS = {
-        "zl": {
-            "file": "ZL3b-n.txt",
-            "name": "Zandbergen-Landini",
-            "alphabet": "eva",
-            "is_eva": True,
+    source_id: str
+    path: Path
+    sha256: str
+    loci: dict[str, Locus]
+    warnings: list[str]
+    reported_loci: list[str]
+
+
+def load_source(source_id: str, cache_dir: Path) -> LoadedSource:
+    """Parse one cached source (non-strict: every line the parser does not accept is a warning, never a skip)."""
+    path = cache_dir / SOURCES[source_id]
+    require_licensed(path)  # before it is read (S12)
+    parser = IVTFFParser()
+    emitted = [locus for page in parser.parse_file(path) for locus in page.loci]
+    loci = {locus.locus_id: locus for locus in emitted}
+    if len(loci) != len(emitted):
+        # an interlinear source holds several readings of one id; the index compares one reading per source, so a
+        # second reading would replace the first unseen (B-076, B-089): refuse instead
+        counts = Counter(locus.locus_id for locus in emitted)
+        repeated = sorted(locus_id for locus_id, n in counts.items() if n > 1)
+        raise ValueError(
+            f"{source_id}: repeated locus ids, one reading per id expected: {repeated[:5]}"
+        )
+    return LoadedSource(
+        source_id=source_id,
+        path=path,
+        sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
+        loci=loci,
+        warnings=[str(w) for w in parser.warnings],
+        reported_loci=[w.locus_id for w in parser.warnings if w.locus_id],
+    )
+
+
+def _sort_key(line_id: str) -> tuple:
+    page, number = line_id.rsplit(":", 1)
+    return (*page_order_key(page), int(number))
+
+
+def build_records(
+    sources: dict[str, LoadedSource], profile_name: str = COMPARISON_PROFILE
+) -> list[MismatchRecord]:
+    """One record per locus id of ZL or IT, in page order then locus number."""
+    profile = get_profile(profile_name)
+    zl, it = sources["zl"].loci, sources["it"].loci
+    records = []
+    for line_id in sorted(set(zl) | set(it), key=_sort_key):
+        a, b = zl.get(line_id), it.get(line_id)
+        page_id, number = line_id.rsplit(":", 1)
+        if a is not None and b is not None:
+            status, similarity = compare(a.text_raw, b.text_raw, profile.id)
+        else:
+            status, similarity = (ZL_ONLY if a is not None else IT_ONLY), None
+        records.append(
+            MismatchRecord(
+                page_id=page_id,
+                line_number=int(number),
+                line_id=line_id,
+                status=status,
+                comparison_profile=profile.id,
+                zl_text_raw=a.text_raw if a else None,
+                it_text_raw=b.text_raw if b else None,
+                zl_reading=profile.apply(a.markup) if a else None,
+                it_reading=profile.apply(b.markup) if b else None,
+                zl_locus_type=a.locus_code if a else None,
+                it_locus_type=b.locus_code if b else None,
+                zl_source_line=a.source_line if a else None,
+                it_source_line=b.source_line if b else None,
+                similarity_score=round(similarity, 6) if similarity is not None else None,
+                sources_present=[sid for sid, src in sources.items() if line_id in src.loci],
+            )
+        )
+    return records
+
+
+def build_report(records: list[MismatchRecord], sources: dict[str, LoadedSource]) -> dict[str, Any]:
+    """The build's own numbers: counts per status, agreement over the loci both sources have, and every parser warning."""
+    counts = Counter(r.status for r in records)
+    both = sum(counts[v] for v in VERDICTS)
+    agreeing = sum(counts[v] for v in AGREEING)
+    different = [
+        r.similarity_score
+        for r in records
+        if r.status == "different" and r.similarity_score is not None
+    ]
+    return {
+        "comparison_profile": records[0].comparison_profile if records else COMPARISON_PROFILE,
+        "total_lines": len(records),
+        "status_counts": {status: counts.get(status, 0) for status in STATUSES},
+        "both_present": both,
+        "agreeing": agreeing,
+        "agreement_rate": agreeing / both if both else None,
+        "different_rate": counts["different"] / both if both else None,
+        "different_similarity": {
+            "count": len(different),
+            "median": statistics.median(different) if different else None,
         },
-        "it": {
-            "file": "IT_ivtff_1a.txt",
-            "name": "Takahashi",
-            "alphabet": "eva",
-            "is_eva": True,
-        },
-        "cd": {
-            "file": "CD2a-n.txt",
-            "name": "Currier-DImpero",
-            "alphabet": "currier",
-            "is_eva": False,
-        },
-        "fg": {
-            "file": "FG2a-n.txt",
-            "name": "Friedman-Study-Group",
-            "alphabet": "fsg",
-            "is_eva": False,
-        },
-        "gc": {
-            "file": "GC2a-n.txt",
-            "name": "Glen-Claston",
-            "alphabet": "v101",
-            "is_eva": False,
+        "sources": {
+            sid: {
+                "file": src.path.name,
+                "sha256": src.sha256,
+                "loci_emitted": len(src.loci),
+                "reported_loci": src.reported_loci,
+                "warnings": src.warnings,
+            }
+            for sid, src in sources.items()
         },
     }
+
+
+#: What each verdict means, for the erratum table.
+VERDICT_LABELS = {
+    "identical": "identical text (`text_raw` equal)",
+    "same_reading": "same reading (word sequences equal under the profile)",
+    "alternate_reading": "same reading for some choice among the alternates",
+    "different": "different",
+}
+
+
+def erratum_table(report: dict[str, Any]) -> str:
+    """The mismatch erratum's table and summary, rendered from the build report: the README, the dataset card and the
+    CHANGELOG carry this text exactly, and the suite re-renders it from the committed report (item 1.8).
+    """
+    both = report["both_present"]
+    counts = report["status_counts"]
+
+    def share(n: int) -> str:
+        return f"{100 * n / both:.1f}%"
+
+    lines = [
+        f"| Verdict, ZL against IT, profile `{report['comparison_profile']}` | Loci | Share of the {both:,} loci both hold |",
+        "|---|---|---|",
+    ]
+    for verdict, label in VERDICT_LABELS.items():
+        lines.append(f"| {label} | {counts[verdict]:,} | {share(counts[verdict])} |")
+    median = report["different_similarity"]["median"]
+    lines += [
+        "",
+        f"Agreement (identical, same reading, or an alternate's reading): {report['agreeing']:,} of {both:,} loci "
+        f"({share(report['agreeing'])}). Different: {counts['different']:,} ({share(counts['different'])}), with a median "
+        f"similarity of {median:.3f} among them. ZL only: {counts['zl_only']:,}; IT only: {counts['it_only']:,}.",
+    ]
+    return "\n".join(lines)
+
+
+class MismatchIndexBuilder:
+    """The builder as an object (the interface before item 1.8, kept): load sources one by one, then build.
+
+    Every parser warning of a loaded source is logged at WARNING level and kept in ``stats["warnings"]`` under its source
+    id, so a rejected locus is never accepted silently (AP4 F2, B-038).
+    """
 
     def __init__(self, cache_dir: Path | None = None, output_dir: Path | None = None):
         self.cache_dir = cache_dir or CACHE_DIR
         self.output_dir = output_dir or OUTPUT_DIR
-        self.parser = IVTFFParser()
-
-        # Storage for parsed transcriptions: {source_id: {line_id: TranscriptionLine}}
-        self.transcriptions: dict[str, dict[str, TranscriptionLine]] = {}
-
-        # All unique line_ids across all sources
-        self.all_line_ids: set[str] = set()
-
-        # Statistics
-        self.stats: dict[str, Any] = {
-            "sources_loaded": [],
-            "total_lines": 0,
-            "exact_matches": 0,
-            "normalized_matches": 0,
-            "content_mismatches": 0,
-            "zl_only_lines": 0,
-            "it_only_lines": 0,
-            "both_eva_present": 0,
-            "per_source_counts": {},
-        }
+        self.sources: dict[str, LoadedSource] = {}
+        self.stats: dict[str, Any] = {"sources_loaded": [], "warnings": {}}
 
     def load_transcription(self, source_id: str) -> bool:
-        """Load a single transcription file."""
-        config = self.TRANSCRIPTION_CONFIGS.get(source_id)
-        if not config:
-            logger.error(f"Unknown source_id: {source_id}")
+        """Parse one cached source; True when it was read (its warnings are logged and recorded, never dropped)."""
+        if source_id not in SOURCES or not (self.cache_dir / SOURCES[source_id]).exists():
+            logger.warning("mismatch index: source %s not found in %s", source_id, self.cache_dir)
             return False
-
-        filepath = self.cache_dir / str(config["file"])
-        if not filepath.exists():
-            logger.warning(f"Transcription file not found: {filepath}")
-            return False
-
-        try:
-            # Parse the file
-            pages = self.parser.parse_file(filepath)
-
-            # Index by line_id
-            lines_dict: dict[str, TranscriptionLine] = {}
-            for page in pages:
-                for locus in page.loci:
-                    line_id = locus.locus_id  # Already formatted as page_id:locus_number
-
-                    line = TranscriptionLine(
-                        page_id=locus.page_id,
-                        line_number=locus.locus_number,
-                        line_id=line_id,
-                        text_raw=locus.raw_locator,
-                        text_clean=locus.text,
-                        source_id=source_id,
-                    )
-                    lines_dict[line_id] = line
-                    self.all_line_ids.add(line_id)
-
-            self.transcriptions[source_id] = lines_dict
-            self.stats["sources_loaded"].append(source_id)
-            self.stats["per_source_counts"][source_id] = len(lines_dict)
-
-            logger.info(f"Loaded {source_id}: {len(lines_dict)} lines from {config['file']}")
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to parse {source_id}: {e}")
-            return False
-
-    def load_all_transcriptions(self) -> int:
-        """Load all available transcription files."""
-        loaded = 0
-        for source_id in self.TRANSCRIPTION_CONFIGS:
-            if self.load_transcription(source_id):
-                loaded += 1
-        return loaded
-
-    @staticmethod
-    def normalize_eva_text(text: str) -> str:
-        """Normalize EVA text for comparison.
-
-        Removes:
-        - Uncertain markers (?, !)
-        - Editorial markers (<>, {}, [])
-        - Multiple spaces
-        - Leading/trailing whitespace
-        """
-        if not text:
-            return ""
-
-        # Remove uncertainty markers
-        normalized = text.replace("?", "").replace("!", "").replace("*", "")
-
-        # Remove editorial markers content
-        import re
-
-        normalized = re.sub(r"<[^>]*>", "", normalized)  # <...>
-        normalized = re.sub(r"\{[^}]*\}", "", normalized)  # {...}
-        normalized = re.sub(r"\[[^\]]*\]", "", normalized)  # [...]
-
-        # Normalize spaces
-        normalized = " ".join(normalized.split())
-
-        return normalized.strip()
-
-    @staticmethod
-    def compute_similarity(text1: str, text2: str) -> float:
-        """Compute similarity ratio between two texts."""
-        if not text1 or not text2:
-            return 0.0
-        return SequenceMatcher(None, text1, text2).ratio()
-
-    def compare_eva_lines(
-        self, zl_text: str | None, it_text: str | None
-    ) -> tuple[str, bool | None, float | None]:
-        """Compare two EVA transcriptions.
-
-        Returns:
-            tuple of (status, eva_agreement, similarity_score)
-        """
-        if zl_text is None and it_text is None:
-            return "both_missing", None, None
-
-        if zl_text is None:
-            return "zl_missing", None, None
-
-        if it_text is None:
-            return "it_missing", None, None
-
-        # Exact match
-        if zl_text == it_text:
-            return "exact_match", True, 1.0
-
-        # Normalized comparison
-        zl_norm = self.normalize_eva_text(zl_text)
-        it_norm = self.normalize_eva_text(it_text)
-
-        if zl_norm == it_norm:
-            return "normalized_match", True, 1.0
-
-        # Compute similarity
-        similarity = self.compute_similarity(zl_norm, it_norm)
-
-        # High similarity threshold
-        if similarity >= 0.95:
-            return "high_similarity", True, similarity
-
-        return "content_mismatch", False, similarity
-
-    def build_record(self, line_id: str) -> MismatchRecord:
-        """Build a mismatch record for a single line_id."""
-        # Parse line_id
-        parts = line_id.split(":")
-        page_id = parts[0]
-        line_number = int(parts[1]) if len(parts) > 1 else 0
-
-        # Get text from each transcription
-        zl_line = self.transcriptions.get("zl", {}).get(line_id)
-        it_line = self.transcriptions.get("it", {}).get(line_id)
-        cd_line = self.transcriptions.get("cd", {}).get(line_id)
-        fg_line = self.transcriptions.get("fg", {}).get(line_id)
-        gc_line = self.transcriptions.get("gc", {}).get(line_id)
-
-        # Build record
-        record = MismatchRecord(
-            page_id=page_id,
-            line_number=line_number,
-            line_id=line_id,
-            zl_text=zl_line.text_clean if zl_line else None,
-            it_text=it_line.text_clean if it_line else None,
-            cd_text=cd_line.text_clean if cd_line else None,
-            fg_text=fg_line.text_clean if fg_line else None,
-            gc_text=gc_line.text_clean if gc_line else None,
-        )
-
-        # Track source presence
-        for src_id in ["zl", "it", "cd", "fg", "gc"]:
-            if self.transcriptions.get(src_id, {}).get(line_id):
-                record.sources_present.append(src_id)
-            else:
-                record.sources_missing.append(src_id)
-
-        # Compare EVA sources
-        status, agreement, similarity = self.compare_eva_lines(record.zl_text, record.it_text)
-        record.status = status
-        record.eva_agreement = agreement
-        record.similarity_score = similarity
-
-        # Add notes
-        if status == "content_mismatch" and similarity is not None and similarity < 0.5:
-            record.notes.append(f"Low similarity: {similarity:.2%}")
-
-        return record
+        source = load_source(source_id, self.cache_dir)
+        self.sources[source_id] = source
+        self.stats["sources_loaded"].append(source_id)
+        self.stats["warnings"][source_id] = source.warnings
+        for warning in source.warnings:
+            logger.warning("%s: %s", source_id, warning)
+        return True
 
     def build(self) -> list[MismatchRecord]:
-        """Build the complete mismatch index."""
-        logger.info("Building mismatch index...")
-
-        # Load all transcriptions
-        loaded = self.load_all_transcriptions()
-        logger.info(f"Loaded {loaded} transcription sources")
-
-        if "zl" not in self.transcriptions:
-            raise ValueError("ZL (primary) transcription is required")
-
-        # Build records for all line_ids
-        records: list[MismatchRecord] = []
-
-        for line_id in sorted(self.all_line_ids):
-            record = self.build_record(line_id)
-            records.append(record)
-
-            # Update statistics
-            if record.status == "exact_match":
-                self.stats["exact_matches"] += 1
-            elif record.status == "normalized_match":
-                self.stats["normalized_matches"] += 1
-            elif record.status == "high_similarity":
-                self.stats["high_similarity_matches"] = (
-                    self.stats.get("high_similarity_matches", 0) + 1
-                )
-            elif record.status == "content_mismatch":
-                self.stats["content_mismatches"] += 1
-            elif record.status == "zl_missing":
-                self.stats["it_only_lines"] += 1
-            elif record.status == "it_missing":
-                self.stats["zl_only_lines"] += 1
-
-            if record.zl_text and record.it_text:
-                self.stats["both_eva_present"] += 1
-
-        self.stats["total_lines"] = len(records)
-
-        logger.info(f"Built mismatch index with {len(records)} records")
-        return records
-
-    def export_jsonl(self, records: list[MismatchRecord], output_path: Path | None = None) -> Path:
-        """Export records to JSONL format."""
-        output_path = output_path or (self.output_dir / "mismatch_index.jsonl")
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-
-        with open(output_path, "w", encoding="utf-8") as f:
-            for record in records:
-                f.write(json.dumps(record.to_dict(), ensure_ascii=False) + "\n")
-
-        logger.info(f"Exported {len(records)} records to {output_path}")
-        return output_path
-
-    def export_parquet(
-        self, records: list[MismatchRecord], output_path: Path | None = None
-    ) -> Path:
-        """Export records to Parquet format."""
-        import pyarrow as pa
-        import pyarrow.parquet as pq
-
-        output_path = output_path or (self.output_dir / "mismatch_index.parquet")
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-
-        table = pa.Table.from_pylist([record.to_dict() for record in records])
-        pq.write_table(table, output_path)
-
-        logger.info(f"Exported {len(records)} records to {output_path}")
-        return output_path
-
-    def export_report(self, output_path: Path | None = None) -> Path:
-        """Export build statistics report."""
-        output_path = output_path or (self.output_dir / "mismatch_report.json")
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-
-        # Calculate additional statistics
-        total_agreeing = (
-            self.stats["exact_matches"]
-            + self.stats["normalized_matches"]
-            + self.stats.get("high_similarity_matches", 0)
-        )
-        report = {
-            **self.stats,
-            "total_agreeing": total_agreeing,
-            "agreement_rate": (
-                total_agreeing / self.stats["both_eva_present"]
-                if self.stats["both_eva_present"] > 0
-                else 0
-            ),
-            "eva_coverage": {
-                "zl": self.stats["per_source_counts"].get("zl", 0),
-                "it": self.stats["per_source_counts"].get("it", 0),
-                "both": self.stats["both_eva_present"],
-            },
-        }
-
-        with open(output_path, "w", encoding="utf-8") as f:
-            json.dump(report, f, indent=2)
-
-        logger.info(f"Exported report to {output_path}")
-        return output_path
-
-    def generate_summary_stats(self) -> dict[str, Any]:
-        """Generate summary statistics for dataset card."""
-        total = self.stats["total_lines"]
-        both_eva = self.stats["both_eva_present"]
-        total_agreeing = (
-            self.stats["exact_matches"]
-            + self.stats["normalized_matches"]
-            + self.stats.get("high_similarity_matches", 0)
-        )
-
-        return {
-            "total_lines": total,
-            "eva_both_present": both_eva,
-            "eva_exact_match": self.stats["exact_matches"],
-            "eva_normalized_match": self.stats["normalized_matches"],
-            "eva_high_similarity_match": self.stats.get("high_similarity_matches", 0),
-            "eva_content_mismatch": self.stats["content_mismatches"],
-            "eva_total_agreeing": total_agreeing,
-            "eva_agreement_rate": (
-                f"{(total_agreeing / both_eva * 100):.1f}%" if both_eva > 0 else "N/A"
-            ),
-            "lines_zl_only": self.stats["zl_only_lines"],
-            "lines_it_only": self.stats["it_only_lines"],
-            "sources_loaded": self.stats["sources_loaded"],
-            "per_source_line_counts": self.stats["per_source_counts"],
-        }
+        """Load every source not yet loaded and build the records."""
+        for source_id in SOURCES:
+            if source_id not in self.sources:
+                self.load_transcription(source_id)
+        if "zl" not in self.sources or "it" not in self.sources:
+            raise ValueError("the mismatch index needs both ZL and IT")
+        return build_records(self.sources)
 
 
 def build_mismatch_index(
-    cache_dir: Path | None = None,
-    output_dir: Path | None = None,
+    cache_dir: Path | None = None, output_dir: Path | None = None
 ) -> dict[str, Any]:
-    """Main entry point for building mismatch index.
+    """Build `mismatch_index.jsonl`, its Parquet copy and `mismatch_report.json` into output_dir."""
+    cache_dir = cache_dir or CACHE_DIR
+    output_dir = output_dir or OUTPUT_DIR
+    output_dir.mkdir(parents=True, exist_ok=True)
+    sources = {sid: load_source(sid, cache_dir) for sid in SOURCES}
+    records = build_records(sources)
+    report = build_report(records, sources)
+    # The rows are checked against their schema before anything is written (B-023)
+    from validators.schema import validate_mismatch_index
 
-    Returns:
-        Dictionary with build results and paths
-    """
+    valid, errors = validate_mismatch_index([r.to_dict() for r in records])
+    if not valid:
+        raise ValueError(f"mismatch rows break their schema: {errors[:5]}")
+    jsonl = output_dir / "mismatch_index.jsonl"
+    with open(jsonl, "w", encoding="utf-8") as f:
+        for record in records:
+            f.write(json.dumps(record.to_dict(), ensure_ascii=False, sort_keys=True) + "\n")
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+
+    pq.write_table(
+        pa.Table.from_pylist([r.to_dict() for r in records]), output_dir / "mismatch_index.parquet"
+    )
+    (output_dir / "mismatch_report.json").write_text(
+        json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    for sid, src in sources.items():
+        for warning in src.warnings:
+            logger.warning("%s: %s", sid, warning)
+    return {"records": len(records), "report": report}
+
+
+if __name__ == "__main__":  # pragma: no cover
     logging.basicConfig(level=logging.INFO)
-
-    builder = MismatchIndexBuilder(cache_dir=cache_dir, output_dir=output_dir)
-
-    # Build index
-    records = builder.build()
-
-    # Export
-    jsonl_path = builder.export_jsonl(records)
-    parquet_path = builder.export_parquet(records)
-    report_path = builder.export_report()
-    summary = builder.generate_summary_stats()
-
-    return {
-        "success": True,
-        "records_count": len(records),
-        "output_jsonl": str(jsonl_path),
-        "output_parquet": str(parquet_path),
-        "output_report": str(report_path),
-        "summary": summary,
-    }
-
-
-if __name__ == "__main__":
     result = build_mismatch_index()
-    print(json.dumps(result, indent=2))
+    print(json.dumps(result["report"]["status_counts"], indent=2))

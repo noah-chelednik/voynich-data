@@ -1,0 +1,52 @@
+{"bifolio_id": "qA.b1", "quire_id": "qA", "bifolio_number": 1, "folio_ids": ["f1", "f8"], "page_ids": ["f1r", "f1v", "f8r", "f8v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qA.b2", "quire_id": "qA", "bifolio_number": 2, "folio_ids": ["f2", "f7"], "page_ids": ["f2r", "f2v", "f7r", "f7v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qA.b3", "quire_id": "qA", "bifolio_number": 3, "folio_ids": ["f3", "f6"], "page_ids": ["f3r", "f3v", "f6r", "f6v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qA.b4", "quire_id": "qA", "bifolio_number": 4, "folio_ids": ["f4", "f5"], "page_ids": ["f4r", "f4v", "f5r", "f5v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qB.b1", "quire_id": "qB", "bifolio_number": 1, "folio_ids": ["f9", "f16"], "page_ids": ["f9r", "f9v", "f16r", "f16v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qB.b2", "quire_id": "qB", "bifolio_number": 2, "folio_ids": ["f10", "f15"], "page_ids": ["f10r", "f10v", "f15r", "f15v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qB.b3", "quire_id": "qB", "bifolio_number": 3, "folio_ids": ["f11", "f14"], "page_ids": ["f11r", "f11v", "f14r", "f14v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qB.b4", "quire_id": "qB", "bifolio_number": 4, "folio_ids": ["f13"], "page_ids": ["f13r", "f13v"], "is_complete": false, "notes": ["one leaf of this sheet is in the source; folios of this quire missing from the manuscript: f12"]}
+{"bifolio_id": "qC.b1", "quire_id": "qC", "bifolio_number": 1, "folio_ids": ["f17", "f24"], "page_ids": ["f17r", "f17v", "f24r", "f24v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qC.b2", "quire_id": "qC", "bifolio_number": 2, "folio_ids": ["f18", "f23"], "page_ids": ["f18r", "f18v", "f23r", "f23v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qC.b3", "quire_id": "qC", "bifolio_number": 3, "folio_ids": ["f19", "f22"], "page_ids": ["f19r", "f19v", "f22r", "f22v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qC.b4", "quire_id": "qC", "bifolio_number": 4, "folio_ids": ["f20", "f21"], "page_ids": ["f20r", "f20v", "f21r", "f21v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qD.b1", "quire_id": "qD", "bifolio_number": 1, "folio_ids": ["f25", "f32"], "page_ids": ["f25r", "f25v", "f32r", "f32v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qD.b2", "quire_id": "qD", "bifolio_number": 2, "folio_ids": ["f26", "f31"], "page_ids": ["f26r", "f26v", "f31r", "f31v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qD.b3", "quire_id": "qD", "bifolio_number": 3, "folio_ids": ["f27", "f30"], "page_ids": ["f27r", "f27v", "f30r", "f30v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qD.b4", "quire_id": "qD", "bifolio_number": 4, "folio_ids": ["f28", "f29"], "page_ids": ["f28r", "f28v", "f29r", "f29v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qE.b1", "quire_id": "qE", "bifolio_number": 1, "folio_ids": ["f33", "f40"], "page_ids": ["f33r", "f33v", "f40r", "f40v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qE.b2", "quire_id": "qE", "bifolio_number": 2, "folio_ids": ["f34", "f39"], "page_ids": ["f34r", "f34v", "f39r", "f39v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qE.b3", "quire_id": "qE", "bifolio_number": 3, "folio_ids": ["f35", "f38"], "page_ids": ["f35r", "f35v", "f38r", "f38v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qE.b4", "quire_id": "qE", "bifolio_number": 4, "folio_ids": ["f36", "f37"], "page_ids": ["f36r", "f36v", "f37r", "f37v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qF.b1", "quire_id": "qF", "bifolio_number": 1, "folio_ids": ["f41", "f48"], "page_ids": ["f41r", "f41v", "f48r", "f48v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qF.b2", "quire_id": "qF", "bifolio_number": 2, "folio_ids": ["f42", "f47"], "page_ids": ["f42r", "f42v", "f47r", "f47v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qF.b3", "quire_id": "qF", "bifolio_number": 3, "folio_ids": ["f43", "f46"], "page_ids": ["f43r", "f43v", "f46r", "f46v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qF.b4", "quire_id": "qF", "bifolio_number": 4, "folio_ids": ["f44", "f45"], "page_ids": ["f44r", "f44v", "f45r", "f45v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qG.b1", "quire_id": "qG", "bifolio_number": 1, "folio_ids": ["f49", "f56"], "page_ids": ["f49r", "f49v", "f56r", "f56v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qG.b2", "quire_id": "qG", "bifolio_number": 2, "folio_ids": ["f50", "f55"], "page_ids": ["f50r", "f50v", "f55r", "f55v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qG.b3", "quire_id": "qG", "bifolio_number": 3, "folio_ids": ["f51", "f54"], "page_ids": ["f51r", "f51v", "f54r", "f54v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qG.b4", "quire_id": "qG", "bifolio_number": 4, "folio_ids": ["f52", "f53"], "page_ids": ["f52r", "f52v", "f53r", "f53v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qH.b1", "quire_id": "qH", "bifolio_number": 1, "folio_ids": ["f57", "f66"], "page_ids": ["f57r", "f57v", "f66r", "f66v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qH.b2", "quire_id": "qH", "bifolio_number": 2, "folio_ids": ["f58", "f65"], "page_ids": ["f58r", "f58v", "f65r", "f65v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qI.b1", "quire_id": "qI", "bifolio_number": 1, "folio_ids": ["f67", "f68"], "page_ids": ["f67r1", "f67r2", "f67v1", "f67v2", "f68r1", "f68r2", "f68r3", "f68v1", "f68v2", "f68v3"], "is_complete": true, "notes": []}
+{"bifolio_id": "qJ.b1", "quire_id": "qJ", "bifolio_number": 1, "folio_ids": ["f69", "f70"], "page_ids": ["f69r", "f69v", "f70r1", "f70r2", "f70v1", "f70v2"], "is_complete": true, "notes": []}
+{"bifolio_id": "qK.b1", "quire_id": "qK", "bifolio_number": 1, "folio_ids": ["f71", "f72"], "page_ids": ["f71r", "f71v", "f72r1", "f72r2", "f72r3", "f72v1", "f72v2", "f72v3"], "is_complete": true, "notes": []}
+{"bifolio_id": "qL.b1", "quire_id": "qL", "bifolio_number": 1, "folio_ids": ["f73"], "page_ids": ["f73r", "f73v"], "is_complete": false, "notes": ["one leaf of this sheet is in the source"]}
+{"bifolio_id": "qM.b1", "quire_id": "qM", "bifolio_number": 1, "folio_ids": ["f75", "f84"], "page_ids": ["f75r", "f75v", "f84r", "f84v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qM.b2", "quire_id": "qM", "bifolio_number": 2, "folio_ids": ["f76", "f83"], "page_ids": ["f76r", "f76v", "f83r", "f83v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qM.b3", "quire_id": "qM", "bifolio_number": 3, "folio_ids": ["f77", "f82"], "page_ids": ["f77r", "f77v", "f82r", "f82v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qM.b4", "quire_id": "qM", "bifolio_number": 4, "folio_ids": ["f78", "f81"], "page_ids": ["f78r", "f78v", "f81r", "f81v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qM.b5", "quire_id": "qM", "bifolio_number": 5, "folio_ids": ["f79", "f80"], "page_ids": ["f79r", "f79v", "f80r", "f80v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qN.b1", "quire_id": "qN", "bifolio_number": 1, "folio_ids": ["f85", "f86"], "page_ids": ["f85r1", "f85r2", "fRos", "f86v3", "f86v4", "f86v5", "f86v6"], "is_complete": true, "notes": []}
+{"bifolio_id": "qO.b1", "quire_id": "qO", "bifolio_number": 1, "folio_ids": ["f87", "f90"], "page_ids": ["f87r", "f87v", "f90r1", "f90r2", "f90v1", "f90v2"], "is_complete": true, "notes": []}
+{"bifolio_id": "qO.b2", "quire_id": "qO", "bifolio_number": 2, "folio_ids": ["f88", "f89"], "page_ids": ["f88r", "f88v", "f89r1", "f89r2", "f89v1", "f89v2"], "is_complete": true, "notes": []}
+{"bifolio_id": "qQ.b1", "quire_id": "qQ", "bifolio_number": 1, "folio_ids": ["f93", "f96"], "page_ids": ["f93r", "f93v", "f96r", "f96v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qQ.b2", "quire_id": "qQ", "bifolio_number": 2, "folio_ids": ["f94", "f95"], "page_ids": ["f94r", "f94v", "f95r1", "f95r2", "f95v1", "f95v2"], "is_complete": true, "notes": []}
+{"bifolio_id": "qS.b1", "quire_id": "qS", "bifolio_number": 1, "folio_ids": ["f99", "f102"], "page_ids": ["f99r", "f99v", "f102r1", "f102r2", "f102v1", "f102v2"], "is_complete": true, "notes": []}
+{"bifolio_id": "qS.b2", "quire_id": "qS", "bifolio_number": 2, "folio_ids": ["f100", "f101"], "page_ids": ["f100r", "f100v", "f101r", "f101v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qT.b1", "quire_id": "qT", "bifolio_number": 1, "folio_ids": ["f103", "f116"], "page_ids": ["f103r", "f103v", "f116r", "f116v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qT.b2", "quire_id": "qT", "bifolio_number": 2, "folio_ids": ["f104", "f115"], "page_ids": ["f104r", "f104v", "f115r", "f115v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qT.b3", "quire_id": "qT", "bifolio_number": 3, "folio_ids": ["f105", "f114"], "page_ids": ["f105r", "f105v", "f114r", "f114v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qT.b4", "quire_id": "qT", "bifolio_number": 4, "folio_ids": ["f106", "f113"], "page_ids": ["f106r", "f106v", "f113r", "f113v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qT.b5", "quire_id": "qT", "bifolio_number": 5, "folio_ids": ["f107", "f112"], "page_ids": ["f107r", "f107v", "f112r", "f112v"], "is_complete": true, "notes": []}
+{"bifolio_id": "qT.b6", "quire_id": "qT", "bifolio_number": 6, "folio_ids": ["f108", "f111"], "page_ids": ["f108r", "f108v", "f111r", "f111v"], "is_complete": true, "notes": []}

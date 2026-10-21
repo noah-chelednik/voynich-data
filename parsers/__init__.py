@@ -42,13 +42,19 @@ Format specification: http://www.voynich.nu/software/ivtt/IVTFF_format.pdf
 
 from __future__ import annotations
 
+from .ivtff_markup import Markup, Token, parse_markup
 from .ivtff_parser import (
+    LOCUS_SUBTYPES,
+    PAGE_NAME,
     IVTFFParser,
+    IVTFFWarning,
     Locus,
     LocusPosition,
     LocusType,
     Page,
     PageVariables,
+    ParseWarning,
+    page_order_key,
     parse_ivtff,
 )
 from .metadata_parser import (
@@ -69,11 +75,19 @@ from .metadata_parser import (
 __all__ = [
     # IVTFF Parser
     "IVTFFParser",
+    "IVTFFWarning",
+    "Markup",
+    "Token",
+    "parse_markup",
     "Locus",
     "LocusPosition",
     "LocusType",
     "Page",
     "PageVariables",
+    "ParseWarning",
+    "LOCUS_SUBTYPES",
+    "PAGE_NAME",
+    "page_order_key",
     "parse_ivtff",
     # Metadata Parser
     "MetadataParser",

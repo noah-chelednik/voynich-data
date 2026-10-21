@@ -28,7 +28,6 @@ Example:
 
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import NamedTuple
@@ -253,6 +252,31 @@ class ValidationResult:
         self.is_valid = False
 
 
+#: Stands for one high-ASCII code @NNN; while text is counted (a character no alphabet uses).
+HIGH_ASCII_GLYPH = "\x01"
+
+
+def _counting_reading(text: str) -> str:
+    """The text as counted: the profile analysis-v1's rules, except that a high-ASCII code is HIGH_ASCII_GLYPH."""
+    import re as _re
+
+    from parsers import ivtff_markup as mk
+    from vcat.profiles import _ANALYSIS, LEGACY_MARKERS, Profile
+
+    def ligature(token: mk.Token, profile: Profile) -> str:
+        # a ligature's glyphs, each high-ASCII code inside it one glyph too (review f6661c36 finding 3)
+        inner = _re.sub(r"@\d{3};", HIGH_ASCII_GLYPH, str(token.value))
+        return "".join(char for char in inner if char not in LEGACY_MARKERS)
+
+    counting = Profile(
+        "counting",
+        1,
+        "analysis-v1 with each code as one glyph",
+        {**_ANALYSIS, mk.HIGH_ASCII: HIGH_ASCII_GLYPH, mk.LIGATURE: ligature},
+    )
+    return counting.apply(text)
+
+
 def validate_eva_text(text: str, strict: bool = False) -> ValidationResult:
     """Validate EVA transcription text.
 
@@ -279,32 +303,44 @@ def validate_eva_text(text: str, strict: bool = False) -> ValidationResult:
         4
 
     Note:
-        IVTFF markup such as inline comments {}, locators <>, and
-        high-ASCII codes @NNN; are removed before validation.
-        Alternatives like [a:b] are simplified to keep only the
-        first option.
+        The text is read through its IVTFF markup tokens by the rules of the
+        profile analysis-v1: comments, marks and text tags removed, wraps
+        joined, ligature glyphs kept, the first reading of each alternate,
+        <-> and <~> as word spaces. A high-ASCII code @NNN; counts as one
+        character, and a word made only of codes counts as a word.
     """
     result = ValidationResult()
 
-    # Remove IVTFF markup for validation
-    clean_text = text
+    # Markup the tokenizer cannot read is reported, never read past silently (AC2 F3, B-075): an error when strict,
+    # else a warning
+    from parsers.ivtff_markup import parse_markup
 
-    # Remove inline comments {like this}
-    clean_text = re.sub(r"\{[^}]*\}", "", clean_text)
+    for problem in parse_markup(text).problems:
+        if strict:
+            result.add_error(f"Malformed IVTFF markup: {problem}")
+        else:
+            result.add_warning(f"Malformed IVTFF markup: {problem}")
 
-    # Remove IVTFF markers
-    clean_text = re.sub(r"<[^>]*>", "", clean_text)
+    # Read the text through its markup tokens (parsers.ivtff_markup), so every IVTFF form is handled the one way the
+    # parser reads it: comments, marks and tags removed; wraps joined; ligature glyphs kept; the first reading of an
+    # alternate, empty or not; <-> and <~> as word spaces (AC1 F5, B-059). A high-ASCII code is one glyph, written as
+    # HIGH_ASCII_GLYPH here, so a word made only of codes is a word and each code a character (AC1 F1, B-057).
+    # HIGH_ASCII_GLYPH stands for a code only while counting: written literally in the text it is an unknown character,
+    # never a validated glyph (B-093, AC4 F2)
+    if HIGH_ASCII_GLYPH in text:
+        message = (
+            "Unknown character U+0001 (VCAT's internal stand-in for @NNN;) written in the text"
+        )
+        if strict:
+            result.add_error(message)
+        else:
+            result.add_warning(message)
+    clean_text = _counting_reading(text)
 
-    # Remove high-ASCII codes @NNN;
-    clean_text = re.sub(r"@\d+;", "", clean_text)
+    # Count words by the one EVA tokenizer (vcat/words.py, roadmap item 2.6): separated by . , or whitespace
+    from vcat.words import word_count
 
-    # Remove alternatives, keep first [a:b] -> a
-    clean_text = re.sub(r"\[([^:\]]+):[^\]]+\]", r"\1", clean_text)
-
-    # Count words (separated by . , or space)
-    words = re.split(r"[.,\s]+", clean_text)
-    words = [w for w in words if w.strip()]
-    result.word_count = len(words)
+    result.word_count = word_count(clean_text)
 
     # Check compound glyphs
     for compound in EVA_COMPOUNDS:
@@ -319,6 +355,12 @@ def validate_eva_text(text: str, strict: bool = False) -> ValidationResult:
 
         # Skip whitespace and separators
         if char in EVA_SEPARATORS or char in EVA_LINE_MARKERS or char in EVA_EDITORIAL:
+            i += 1
+            continue
+
+        # A high-ASCII code: one glyph outside the EVA letters
+        if char == HIGH_ASCII_GLYPH:
+            result.char_count += 1
             i += 1
             continue
 

@@ -1,0 +1,21 @@
+voynich-transliterations: license
+
+Dataset: Creative Commons Attribution 4.0 International (CC-BY-4.0)
+  https://creativecommons.org/licenses/by/4.0/legalcode
+
+  VCAT's comparison in the variant tables (locus_variants: agreement,
+  distinct_readings, majority_baseline; word_alignments: the alignments,
+  matches and word_agreement) is CC-BY-4.0. Every row of the per-source
+  configurations is the text of one transliteration of the Voynich Manuscript
+  (Beinecke MS 408, Yale University), with its page and locus ids, as
+  voynich.nu publishes it; voynich.nu makes these transliterations available
+  under CC0 (CC0-1.0), and those fields stay CC0 wherever they are reused. The
+  statement and where it was read are recorded in data_sources/sources.yaml
+  and docs/SOURCES_LICENSE.md of the repository.
+
+  Please cite the transliterators named in the dataset card in published work.
+
+Code that builds the data: MIT License
+  https://github.com/noah-chelednik/voynich-data/blob/main/LICENSE
+
+The manuscript itself is in the public domain.

@@ -13,8 +13,10 @@ The builder:
     1. Parses the IVTFF source file using IVTFFParser
     2. Extracts line-level records with metadata
     3. Validates EVA text and computes statistics
-    4. Exports to Parquet and JSONL formats
-    5. Generates a build report with statistics
+    4. Accounts for every source locus and page (vcat.loss_accounting); the command line
+       refuses to write output while any is unaccounted
+    5. Exports to Parquet and JSONL formats
+    6. Generates a build report with statistics and the accounting
 
 Output files:
     - eva_lines.parquet: Efficient columnar format
@@ -29,13 +31,13 @@ Usage:
 Example:
     >>> from builders import build_eva_lines, run_smoke_test
     >>> records, report = build_eva_lines(
-    ...     source_path=Path("data_sources/raw_sources/ZL3b-n.txt"),
+    ...     source_path=Path("data_sources/cache/ZL3b-n.txt"),
     ...     output_dir=Path("output")
     ... )
-    >>> len(records)
-    4072
-    >>> report.total_pages
-    226
+    >>> len(records) == report.loci_emitted
+    True
+    >>> report.unaccounted_loci  # every source locus is emitted or reported
+    []
 """
 
 from __future__ import annotations
@@ -46,13 +48,16 @@ import json
 import re
 import sys
 from dataclasses import asdict, dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from parsers import IVTFFParser, Page
+from parsers import IVTFFParser, Page, page_order_key
 from vcat import validate_eva_text
 from vcat.charset import validate_text_clean as validate_charset
+from vcat.loss_accounting import account, census_source
+from vcat.profiles import TEXT_CLEAN_PROFILE
+from vcat.sources import pinned_sha256, repo_relative, require_licensed, source_file
 from vcat.text_processing import clean_text_for_analysis, compute_flags
 
 
@@ -65,14 +70,25 @@ class LineRecord:
     metadata, and quality indicators.
 
     Attributes:
-        page_id: Page identifier, e.g., "f1r", "f85v3"
+        page_id: Page identifier, e.g., "f1r", "f86v3"
         line_number: Line number within the page (source locus ID, may have gaps)
         line_index: Sequential index within page (always 1..n, no gaps)
         line_id: Unique identifier in format "{page_id}:{line_number}"
-        text: Raw transcription text including IVTFF markup
+        text: Transcription text including IVTFF markup (stripped, continuations joined)
         text_clean: Cleaned text with markup removed (lossless - preserves @NNN; codes)
+        text_raw: The transliterated text exactly as in the source (DECISIONS Q24)
+        locus_type: The locus code as written, e.g. "@P0", "&Lz" (D7)
+        source_line: 1-based line number of the locus identifier in the source file
+        alternates: The readings of each alternate [a:b], as written (DECISIONS Q25)
+        ligatures: The characters of each ligature {...}
+        uncertain_spaces: How many uncertain word spaces (,)
+        illegible: Each run of ? as written
+        high_ascii: Each high-ASCII code @NNN; as an integer (comments excluded)
+        comments: The text of each in-line comment <!...>
+        drawing_breaks: Each drawing interruption <-> or <~> as written
+        markers: Each paragraph mark <%>, <$> and text tag <@X=y> as written
         line_type: Type of locus ("paragraph", "label", "circle", "radius")
-        position: Position indicator (@, +, =, *) or None
+        position: Locator (IVTFF 2.0 Table 8) or None
         quire: Quire identifier from page metadata
         section: Manuscript section (herbal, astronomical, etc.)
         currier_language: Currier language classification ("A" or "B")
@@ -95,6 +111,17 @@ class LineRecord:
         ...     line_id="f1r:1",
         ...     text="fachys.ykal.ar.ataiin",
         ...     text_clean="fachys.ykal.ar.ataiin",
+        ...     text_raw="fachys.ykal.ar.ataiin",
+        ...     locus_type="@P0",
+        ...     source_line=12,
+        ...     alternates=[],
+        ...     ligatures=[],
+        ...     uncertain_spaces=0,
+        ...     illegible=[],
+        ...     high_ascii=[],
+        ...     comments=[],
+        ...     drawing_breaks=[],
+        ...     markers=[],
         ...     line_type="paragraph",
         ...     position="@",
         ...     quire="A",
@@ -122,6 +149,19 @@ class LineRecord:
     # Text content
     text: str
     text_clean: str
+
+    # The raw and structured layer (roadmap item 1.2)
+    text_raw: str
+    locus_type: str
+    source_line: int
+    alternates: list[list[str]]
+    ligatures: list[str]
+    uncertain_spaces: int
+    illegible: list[str]
+    high_ascii: list[int]
+    comments: list[str]
+    drawing_breaks: list[str]
+    markers: list[str]
 
     # Line metadata
     line_type: str
@@ -169,12 +209,13 @@ class BuildReport:
         source_hash: SHA256 hash of source file (full)
         source_verified: Whether source hash was verified
         build_date: ISO format timestamp of build
-        format_version: IVTFF alphabet version from file header (e.g., "Eva-")
-        format_options: IVTFF format options from header (e.g., "2.0 M 5")
+        alphabet: Transliteration alphabet from the file header (e.g., "Eva-")
+        format_version: IVTFF format version from the file header (e.g., "2.0")
+        format_options: The rest of the file header after the version (e.g., "M 5")
         text_clean_policy: Version of text cleaning policy applied
-        total_pages_in_source: Number of pages parsed from source (226)
-        pages_with_lines: Number of pages that have loci/lines (206)
-        pages_without_lines: Number of pages with no loci (20)
+        total_pages_in_source: Number of pages the parser returned
+        pages_with_lines: Number of pages that have loci/lines
+        pages_without_lines: Number of parsed pages with no loci
         page_ids_without_lines: List of page_ids that have no loci
         total_lines: Number of lines (loci) in the dataset
         total_characters: Total EVA character count
@@ -183,6 +224,16 @@ class BuildReport:
         pages_by_language: Count of pages by Currier language
         pages_by_section: Count of pages by manuscript section
         lines_with_high_ascii: Count of lines containing @NNN; codes
+        source_loci: Locus lines in the source, counted without the parser
+        source_page_headers: Page headers in the source, counted without the parser
+        loci_emitted: Source loci that became records
+        loci_reported: Source loci the parser reported instead of emitting
+        reported_loci: Their ids: the loci the parser recorded as warnings instead of emitting
+        reported_pages: Page headers the parser recorded as warnings instead of accepting
+        unaccounted_loci: Source loci neither emitted nor reported (must be empty)
+        unexpected_loci: Emitted loci absent from the source (must be empty)
+        unaccounted_pages: Source pages neither emitted nor reported (must be empty)
+        unrecognized_source_lines: Source lines starting with '<' that are neither (must be empty)
         warnings: List of warning messages from build
         errors: List of error messages from build
     """
@@ -191,14 +242,15 @@ class BuildReport:
     source_hash: str
     source_verified: bool = False
     build_date: str = ""
+    alphabet: str | None = None
     format_version: str | None = None
     format_options: str | None = None
-    text_clean_policy: str = "centralized_v0.2.1"  # Tracks cleaning policy version
+    text_clean_policy: str = TEXT_CLEAN_PROFILE  # the profile text_clean is (item 1.6, Q39)
 
     # Page counts - the critical distinction per v0.2.1 contract
-    total_pages_in_source: int = 0  # 226 - all pages parsed
-    pages_with_lines: int = 0  # 206 - pages that have loci
-    pages_without_lines: int = 0  # 20 - pages with no loci
+    total_pages_in_source: int = 0  # all pages parsed
+    pages_with_lines: int = 0  # pages that have loci
+    pages_without_lines: int = 0  # parsed pages with no loci
     page_ids_without_lines: list[str] = field(default_factory=list)
 
     # Legacy field for backwards compatibility
@@ -212,6 +264,18 @@ class BuildReport:
     pages_by_section: dict[str, int] = field(default_factory=dict)
     lines_with_high_ascii: int = 0
 
+    # Loss accounting (vcat.loss_accounting): every source locus emitted or reported
+    source_loci: int = 0
+    source_page_headers: int = 0
+    loci_emitted: int = 0
+    loci_reported: int = 0
+    reported_loci: list[str] = field(default_factory=list)
+    reported_pages: list[str] = field(default_factory=list)
+    unaccounted_loci: list[str] = field(default_factory=list)
+    unexpected_loci: list[str] = field(default_factory=list)
+    unaccounted_pages: list[str] = field(default_factory=list)
+    unrecognized_source_lines: list[int] = field(default_factory=list)
+
     warnings: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
 
@@ -219,6 +283,30 @@ class BuildReport:
     def page_count(self) -> int:
         """Alias for total_pages for convenience."""
         return self.total_pages
+
+    def loss_problems(self) -> list[str]:
+        """Why the build does not account for its source; empty when it does."""
+        problems = []
+        if self.unaccounted_loci:
+            problems.append(
+                f"{len(self.unaccounted_loci)} of {self.source_loci} source loci neither emitted "
+                f"nor reported, first {self.unaccounted_loci[:5]}"
+            )
+        if self.unexpected_loci:
+            problems.append(f"emitted loci not in the source: {self.unexpected_loci[:5]}")
+        if self.unaccounted_pages:
+            problems.append(f"source pages neither emitted nor reported: {self.unaccounted_pages}")
+        accounted = self.loci_emitted + self.loci_reported + len(self.unaccounted_loci)
+        if accounted != self.source_loci:
+            problems.append(
+                f"{self.loci_emitted} emitted + {self.loci_reported} reported + "
+                f"{len(self.unaccounted_loci)} unaccounted != {self.source_loci} source loci"
+            )
+        if self.unrecognized_source_lines:
+            problems.append(
+                f"source lines neither locus nor page header: {self.unrecognized_source_lines[:5]}"
+            )
+        return problems
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization.
@@ -338,26 +426,26 @@ def build_eva_lines(
 
     Example:
         >>> records, report = build_eva_lines(
-        ...     source_path=Path("data_sources/raw_sources/ZL3b-n.txt"),
+        ...     source_path=Path("data_sources/cache/ZL3b-n.txt"),
         ...     output_dir=Path("output")
         ... )
-        >>> len(records)
-        4072
-        >>> report.pages_with_lines
-        206
-        >>> report.pages_by_language
-        {'A': 114, 'B': 82, ...}
+        >>> len(records) + len(report.unaccounted_loci) == report.source_loci
+        True
     """
     # Compute source hash (FULL hash for reproducibility)
+    require_licensed(source_path)  # before anything is read or written (S12)
     with open(source_path, "rb") as f:
         source_hash = hashlib.sha256(f.read()).hexdigest()
 
-    # Initialize report with proper page tracking
+    # Initialize report with proper page tracking. source_verified: the hash is the SHA-256 of the bytes
+    # read (the validators recompute it); whether it is the hash data_sources/sources.yaml pins is the
+    # release manifest's "pinned" (B-074). The path is recorded relative to the repository, so no report
+    # names a local checkout; the timestamp is the instant in UTC (B-070).
     report = BuildReport(
-        source_file=str(source_path),
+        source_file=repo_relative(source_path),
         source_hash=source_hash,
         source_verified=True,
-        build_date=datetime.now().isoformat() + "Z",
+        build_date=datetime.now(UTC).isoformat(),
         format_version=None,
     )
 
@@ -365,8 +453,14 @@ def build_eva_lines(
     parser = IVTFFParser()
     pages = list(parser.parse_file(source_path))
 
+    report.alphabet = parser.alphabet
     report.format_version = parser.format_version
     report.format_options = parser.format_options
+    # Lines the parser did not accept: each is a warning, and each rejected locus or page is
+    # reported (accounted, not emitted), never lost silently (roadmap item 1.1).
+    report.warnings.extend(f"parser: {w}" for w in parser.warnings)
+    reported_loci = [w.locus_id for w in parser.warnings if w.locus_id]
+    reported_pages = [w.page_id for w in parser.warnings if w.page_id]
     report.total_pages_in_source = len(pages)
     report.total_pages = len(pages)  # Legacy field
 
@@ -401,7 +495,7 @@ def build_eva_lines(
             line_index += 1
 
             # Use CENTRALIZED text processing (same as verifier)
-            has_uncertain, has_illegible, has_alternatives = compute_flags(locus.text)
+            has_uncertain, has_illegible, _ = compute_flags(locus.text)
             text_clean = clean_text_for_analysis(locus.text)
 
             # Validate text_clean against charset
@@ -411,8 +505,13 @@ def build_eva_lines(
                     f"Invalid chars in {page.page_id}:{locus.locus_number}: {invalid_chars}"
                 )
 
-            # Check for high-ASCII codes
-            has_high_ascii = parser.has_high_ascii_codes(locus.text)
+            # The structured layer: the markup the parser read from text_raw
+            markup = locus.markup.fields()
+
+            # The flags are exactly "the field is not empty" (Q25, B-025)
+            has_alternatives = bool(markup["alternates"])
+            # High-ASCII codes in the transliterated text (not in comments; Q25)
+            has_high_ascii = bool(markup["high_ascii"])
             if has_high_ascii:
                 report.lines_with_high_ascii += 1
 
@@ -431,6 +530,10 @@ def build_eva_lines(
                 line_id=f"{page.page_id}:{locus.locus_number}",
                 text=locus.text,
                 text_clean=text_clean,
+                text_raw=locus.text_raw,
+                locus_type=locus.locus_code,
+                source_line=locus.source_line,
+                **markup,
                 line_type=line_type,
                 position=locus.position.value if locus.position else None,
                 quire=page.variables.quire,
@@ -460,20 +563,31 @@ def build_eva_lines(
     report.page_ids_without_lines = sorted(pages_without_lines_list)
     report.total_lines = len(records)
 
-    # Sort records for deterministic output
-    # Ordering contract: (folio_number, side, panel, line_index)
-    def sort_key(record: LineRecord) -> tuple:
-        page_id = record.page_id
-        line_index = record.line_index
-        match = re.match(r"f(\d+)([rv])(\d*)", page_id)
-        if match:
-            folio_num = int(match.group(1))
-            side = 0 if match.group(2) == "r" else 1
-            panel = int(match.group(3)) if match.group(3) else 0
-            return (folio_num, side, panel, line_index)
-        return (999999, 0, 0, page_id, line_index)
+    # Account for every source locus and page, counted without the parser: each is emitted, or
+    # reported by the parser, or unaccounted (which fails the build).
+    loss = account(
+        census_source(source_path),
+        emitted_loci=[r.line_id for r in records],
+        emitted_pages=[page.page_id for page in pages],
+        reported_loci=reported_loci,
+        reported_pages=reported_pages,
+    )
+    report.source_loci = loss.source_loci
+    report.source_page_headers = loss.source_pages
+    report.loci_emitted = loss.loci_emitted
+    report.loci_reported = loss.loci_reported
+    # One entry per rejected locus line, even when another reading of the same id was emitted
+    # (reach 06fb787e gap 3); the accounting counts occurrences.
+    report.reported_loci = reported_loci
+    report.reported_pages = reported_pages
+    report.unaccounted_loci = loss.unaccounted_loci
+    report.unexpected_loci = loss.unexpected_loci
+    report.unaccounted_pages = loss.unaccounted_pages
+    report.unrecognized_source_lines = loss.unrecognized_lines
 
-    records.sort(key=sort_key)
+    # Sort records for deterministic output
+    # Ordering contract: (folio_number, side, panel, line_index), parsers.page_order_key
+    records.sort(key=lambda record: (*page_order_key(record.page_id), record.line_index))
 
     return records, report
 
@@ -557,7 +671,11 @@ def generate_sha256sums(output_dir: Path, jsonl_hash: str) -> None:
 
 
 def generate_manifest(
-    output_dir: Path, report: BuildReport, record_count: int, jsonl_hash: str
+    output_dir: Path,
+    report: BuildReport,
+    record_count: int,
+    jsonl_hash: str,
+    parquet_written: bool = False,
 ) -> None:
     """
     Generate release manifest with sorted keys for stable diffing.
@@ -570,31 +688,41 @@ def generate_manifest(
         report: Build report
         record_count: Number of records
         jsonl_hash: SHA256 hash of JSONL file
+        parquet_written: whether this build wrote eva_lines.parquet; the manifest lists only files
+            the build wrote (AB1 F2, B-069)
     """
     from vcat import __version__
+
+    files: list[dict[str, Any]] = [
+        {"name": "eva_lines.jsonl", "reproducible": True, "sha256": jsonl_hash}
+    ]
+    if parquet_written:
+        files.append(
+            {
+                "name": "eva_lines.parquet",
+                "note": "Content-equivalent; bitwise reproducibility not guaranteed",
+                "reproducible": False,
+            }
+        )
+    files.append(
+        {
+            "name": "eva_lines_build_report.json",
+            "note": "Contains build timestamp",
+            "reproducible": False,
+        }
+    )
 
     manifest = {
         "build": {"date": report.build_date, "tool_version": __version__},
         "contract": {
-            "charset_covenant": "Locked for v0.2.x - see docs/charset_decisions.md",
+            # The current contract (AD1 F7, B-065): docs/charset_decisions.md is the 0.2.x record it supersedes
+            "faithfulness_contract": "docs/data_model.md",
             "flags_computed_from": "tag-stripped text before marker removal",
             "json_serialization": "sort_keys=True, separators=(',',':'), newline='\\n'",
             "ordering": "deterministic by (folio_number, side, panel, line_index)",
         },
         "dataset": {"config": "lines", "name": "voynich-eva", "version": __version__},
-        "files": [
-            {"name": "eva_lines.jsonl", "reproducible": True, "sha256": jsonl_hash},
-            {
-                "name": "eva_lines.parquet",
-                "note": "Content-equivalent; bitwise reproducibility not guaranteed",
-                "reproducible": False,
-            },
-            {
-                "name": "eva_lines_build_report.json",
-                "note": "Contains build timestamp",
-                "reproducible": False,
-            },
-        ],
+        "files": files,
         "manifest_version": "1.2",
         "reproducibility": {
             "canonical_artifact": "eva_lines.jsonl",
@@ -605,6 +733,9 @@ def generate_manifest(
         },
         "source": {
             "expected_sha256": report.source_hash,
+            # True only when the hash is the one data_sources/sources.yaml pins for the file (B-074)
+            "pinned": pinned_sha256(report.source_file) == report.source_hash,
+            "pinned_by": "data_sources/sources.yaml",
             "name": "zandbergen_landini",
             "verified": report.source_verified,
         },
@@ -625,16 +756,19 @@ def generate_manifest(
 def run_smoke_test(records: list[LineRecord], report: BuildReport) -> bool:
     """Run smoke tests to verify the build.
 
-    Performs 10 validation checks on the built dataset to ensure
-    data quality and completeness.
+    Performs 10 validation checks on the built dataset. No check compares
+    against a hand-written number: counts are checked against the build
+    report. Whether the build accounts for every source locus is checked by
+    the loss accounting (BuildReport.loss_problems), which the command line
+    enforces before writing.
 
     Tests performed:
-        1. Record count >= 4000
+        1. Record count equals the report's total_lines
         2. All records have page_id
         3. All records have line_id
         4. No duplicate line_ids
-        5. At least 95% of records have characters
-        6. More than 200 unique pages
+        5. Every record with letters in text_clean has a character count
+        6. Unique pages equal the report's pages_with_lines
         7. Both Currier languages (A, B) present
         8. Multiple line types present
         9. No critical errors in build report
@@ -666,11 +800,11 @@ def run_smoke_test(records: list[LineRecord], report: BuildReport) -> bool:
             print(f"  ✗ {name}: {detail}")
             tests_failed += 1
 
-    # Test 1: Minimum record count
+    # Test 1: Record count agrees with the report
     check(
-        "Record count >= 4000",
-        len(records) >= 4000,
-        f"Only {len(records)} records",
+        "Record count matches report total_lines",
+        bool(records) and len(records) == report.total_lines,
+        f"{len(records)} records, report says {report.total_lines}",
     )
 
     # Test 2: All records have page_id
@@ -690,21 +824,22 @@ def run_smoke_test(records: list[LineRecord], report: BuildReport) -> bool:
         f"{len(line_ids) - unique_ids} duplicates",
     )
 
-    # Test 5: Character count > 0 for most records
-    records_with_chars = sum(1 for r in records if r.char_count > 0)
-    pct_with_chars = 100 * records_with_chars / len(records) if records else 0
+    # Test 5: Records with letters have a character count
+    uncounted = [
+        r.line_id for r in records if r.char_count <= 0 and any(c.isalpha() for c in r.text_clean)
+    ]
     check(
-        "At least 95% of records have characters",
-        pct_with_chars >= 95,
-        f"Only {pct_with_chars:.1f}%",
+        "Every record with letters has a character count",
+        not uncounted,
+        f"{len(uncounted)} records, first {uncounted[:5]}",
     )
 
-    # Test 6: Multiple pages present
+    # Test 6: Pages agree with the report
     unique_pages = len({r.page_id for r in records})
     check(
-        "Multiple pages present (>200)",
-        unique_pages > 200,
-        f"Only {unique_pages} pages",
+        "Unique pages match report pages_with_lines",
+        unique_pages == report.pages_with_lines,
+        f"{unique_pages} pages, report says {report.pages_with_lines}",
     )
 
     # Test 7: Both Currier languages present
@@ -715,12 +850,12 @@ def run_smoke_test(records: list[LineRecord], report: BuildReport) -> bool:
         f"Only {languages}",
     )
 
-    # Test 8: Multiple line types
+    # Test 8: Every line type names a generic locus type (no threshold; reach 61cfe3b0 gap 3)
     line_types = {r.line_type for r in records}
     check(
-        "Multiple line types present",
-        len(line_types) >= 2,
-        f"Only {line_types}",
+        "Every line type names a generic locus type",
+        bool(line_types) and line_types <= {"paragraph", "label", "circle", "radius"},
+        f"Line types {line_types}",
     )
 
     # Test 9: No critical errors in report
@@ -756,7 +891,7 @@ def main() -> None:  # pragma: no cover
     parser.add_argument(
         "--source",
         type=Path,
-        default=Path("data_sources/cache/ZL3b-n.txt"),
+        default=source_file("ZL"),  # from data_sources/sources.yaml (B-081)
         help="Path to source IVTFF file",
     )
     parser.add_argument(
@@ -819,6 +954,16 @@ def main() -> None:  # pragma: no cover
     for lang, count in sorted(report.pages_by_language.items()):
         print(f"  {lang}: {count}")
 
+    # Loss accounting: an unaccounted source locus or page fails the build, before any output
+    print(f"\nSource loci: {report.source_loci}, emitted: {report.loci_emitted}")
+    problems = report.loss_problems()
+    if problems:
+        print("\nBuild FAILED: the output would not account for the source:")
+        for problem in problems:
+            print(f"  - {problem}")
+        print("No output written.")
+        sys.exit(1)
+
     # Run smoke test
     if args.smoke_test:
         success = run_smoke_test(records, report)
@@ -836,14 +981,18 @@ def main() -> None:  # pragma: no cover
         print(f"  Wrote {len(records)} records")
         print(f"  SHA256: {jsonl_hash}")
 
+    parquet_written = False
     if args.format in ("parquet", "both"):
         parquet_path = output_dir / "eva_lines.parquet"
         print(f"\nExporting to Parquet: {parquet_path}")
         try:
             export_to_parquet(records, parquet_path)
-            print(f"  Wrote {len(records)} records")
         except RuntimeError as e:
-            print(f"  Warning: {e}")
+            # A requested format that cannot be written fails the build (AB1 F2, B-069)
+            print(f"\nBuild FAILED: the requested Parquet export failed: {e}")
+            sys.exit(1)
+        parquet_written = True
+        print(f"  Wrote {len(records)} records")
 
     # Save build report with sorted keys
     report_path = output_dir / "eva_lines_build_report.json"
@@ -859,7 +1008,7 @@ def main() -> None:  # pragma: no cover
 
         # Generate release manifest
         print("Generating release manifest...")
-        generate_manifest(output_dir, report, len(records), jsonl_hash)
+        generate_manifest(output_dir, report, len(records), jsonl_hash, parquet_written)
         print(f"  Manifest written to {output_dir / 'release_manifest.json'}")
 
     print("\n" + "=" * 60)

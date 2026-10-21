@@ -1,26 +1,23 @@
-VCAT Dataset License (Research Use)
+voynich-eva: license
 
-Dataset structure, processing code, and documentation:
-  MIT License — Copyright (c) 2026 Noah Chelednik
+Dataset: Creative Commons Attribution 4.0 International (CC-BY-4.0)
+  https://creativecommons.org/licenses/by/4.0/legalcode
+
+  VCAT's annotations in this repository's configurations (the metadata's
+  section judgements and missing folios, the links to Yale's images, the
+  mismatch verdicts and scores, the variant tables' agreement, baseline and
+  alignments) are CC-BY-4.0. The lines (default), the words and the
+  per-source transliterations are the text of the transliterations of the
+  Voynich Manuscript (Beinecke MS 408, Yale University) as voynich.nu
+  publishes them, and functions of it; voynich.nu makes them available under
+  CC0 (CC0-1.0), and those fields stay CC0 wherever they are reused. The
+  statement and where it was read are recorded in data_sources/sources.yaml
+  and docs/SOURCES_LICENSE.md of the repository; it was read at its source on
+  2026-10-17.
+
+  Please cite the transliterators named in the dataset card in published work.
+
+Code that builds the data: MIT License
   https://github.com/noah-chelednik/voynich-data/blob/main/LICENSE
 
-Underlying transcription data:
-  This dataset is derived from scholarly transcriptions of the Voynich
-  Manuscript (Beinecke MS 408, Yale University) that are publicly
-  distributed for research, primarily the Zandbergen-Landini (ZL)
-  transcription from https://www.voynich.nu/. The transcription authors
-  have not published explicit license statements.
-
-  This dataset is therefore released as a RESEARCH RESOURCE:
-
-  1. Research and educational use is the intended purpose.
-  2. Cite the original transcribers in any published work
-     (see the Citation section of the dataset card).
-  3. For commercial applications, verify rights independently and
-     contact the transcription authors.
-
-  Full provenance for all transcription sources:
-  https://github.com/noah-chelednik/voynich-data/blob/main/docs/SOURCES_LICENSE.md
-
-The manuscript itself is in the public domain. Images of the manuscript
-are provided by the Beinecke Rare Book & Manuscript Library.
+The manuscript itself is in the public domain.

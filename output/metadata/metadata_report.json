@@ -1,22 +1,22 @@
 {
   "source_file": "ZL3b-n.txt",
   "source_hash": "bf5b6d4ac1e3",
-  "build_timestamp": "2026-01-18T11:23:07.688503+00:00",
-  "build_version": "0.2.3",
-  "total_pages": 226,
-  "pages_with_text": 206,
+  "build_timestamp": "2026-10-21T15:15:46.248357+00:00",
+  "build_version": "1.0.0",
+  "total_pages": 227,
+  "pages_with_text": 227,
   "pages_by_section": {
     "herbal_a": 48,
     "herbal_b": 70,
     "astronomical": 26,
     "biological": 20,
-    "cosmological": 6,
+    "cosmological": 7,
     "pharmaceutical": 32,
     "recipes": 24
   },
   "pages_by_language": {
     "A": 114,
-    "B": 82,
+    "B": 83,
     "unknown": 30
   },
   "pages_by_hand": {
@@ -24,18 +24,35 @@
     "2": 46,
     "5": 7,
     "3": 33,
-    "4": 26,
-    "@": 1
+    "4": 27,
+    "unknown": 1
   },
   "total_folios": 102,
   "foldout_folios": 10,
-  "missing_folios": 4,
+  "missing_folios": 0,
   "total_quires": 18,
-  "complete_quires": 17,
-  "total_lines": 3957,
-  "total_labels": 115,
-  "output_dir": "",
-  "pages_file": "",
-  "folios_file": "",
-  "quires_file": ""
+  "complete_quires": 13,
+  "total_bifolia": 52,
+  "incomplete_bifolia": 2,
+  "page_orders": [
+    "foliation",
+    "zl_file"
+  ],
+  "total_lines": 4130,
+  "total_labels": 1029,
+  "warnings": [],
+  "reported_loci": [],
+  "reported_pages": [],
+  "output_dir": "output/metadata",
+  "pages_file": "output/metadata/pages.jsonl",
+  "folios_file": "output/metadata/folios.jsonl",
+  "quires_file": "output/metadata/quires.jsonl",
+  "bifolia_file": "output/metadata/bifolia.jsonl",
+  "page_orders_file": "output/metadata/page_orders.jsonl",
+  "layers_file": "output/metadata/layers.jsonl",
+  "page_canvases_file": "output/metadata/page_canvases.jsonl",
+  "iiif_manifest": "https://collections.library.yale.edu/manifests/2002046",
+  "iiif_manifest_sha256": "317d58fd9ea90392a83d9858a91eada3d0b41416a3c835857dc0154bd123a309",
+  "total_page_canvases": 247,
+  "partial_page_canvases": 36
 }

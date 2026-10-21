@@ -91,19 +91,14 @@ class TestStructuralInvariants:
             assert sorted(indices) == expected, f"Page {page_id}"
 
     def test_deterministic_ordering(self, records):
-        """Records ordered by (folio_number, side, panel, line_index)."""
-        import re
+        """Records ordered by (folio_number, side, panel, line_index), the one shared ordering
+        contract `parsers.page_order_key`, which places fRos as f85 verso (DECISIONS Q19). This
+        test carried its own copy of the key, which put fRos last; the committed output has fRos
+        rows since item 1.2 rebuilt it."""
+        from parsers import page_order_key
 
         def sort_key(r):
-            match = re.match(r"f(\d+)([rv])(\d*)", r["page_id"])
-            if match:
-                return (
-                    int(match.group(1)),
-                    0 if match.group(2) == "r" else 1,
-                    int(match.group(3)) if match.group(3) else 0,
-                    r["line_index"],
-                )
-            return (999999, 0, 0, 0)
+            return (*page_order_key(r["page_id"]), r["line_index"])
 
         prev = None
         for r in records:

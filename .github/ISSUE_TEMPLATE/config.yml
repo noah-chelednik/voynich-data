@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Stability policy and errata
+    url: https://github.com/noah-chelednik/voynich-data/blob/main/STABILITY.md
+    about: What VCAT keeps stable between releases, and every correction made (ERRATA.md).

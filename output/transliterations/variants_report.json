@@ -1,0 +1,67 @@
+{
+  "algorithm": "Needleman-Wunsch on words: match 0, substitution 1, insertion 1, deletion 1; ties: diagonal, deletion, insertion (vcat/variants.py)",
+  "alignments": 38357,
+  "compared_alphabets": [
+    "EVA"
+  ],
+  "frame_source": "ZL",
+  "inputs": {
+    "CD": {
+      "file": "cd.jsonl",
+      "sha256": "1e11155d847316ed2afb75ffa496ce2adf1874aec9af9be81e0401f7c0c8a691"
+    },
+    "FG": {
+      "file": "fg.jsonl",
+      "sha256": "9540e32937d7948e37c29864efe6eb866915bc99d26651028ee740e146802de7"
+    },
+    "GC": {
+      "file": "gc.jsonl",
+      "sha256": "5024c9b40635a528e4b0ca984f0ec112d606afffca36685d27a6cedd7c5ba9e8"
+    },
+    "IT": {
+      "file": "it.jsonl",
+      "sha256": "12bc95b57bda51c60da15ca9f60eb8a8a1c642ba02e82322ab4854ed126e43bf"
+    },
+    "IT2a": {
+      "file": "it2a.jsonl",
+      "sha256": "a445675dc7686e3dc826aefaaee2b9b34f75395072ceb31a1fef0f957a63f89e"
+    },
+    "LSI": {
+      "file": "lsi.jsonl",
+      "sha256": "2c8ad2404aa660b341e8344cf9696251f535d892b2c5d46017782d52018e03b4"
+    },
+    "RF1b": {
+      "file": "rf1b.jsonl",
+      "sha256": "5400390367dd22741037311c5285302f0bbc65006c23664324ad2d29ae11e84d"
+    },
+    "VT": {
+      "file": "vt.jsonl",
+      "sha256": "13a823a72aa838398a7510d9adbe93af4380f953244ba79f82f8c9ecde2bcbad"
+    },
+    "ZL": {
+      "file": "zl.jsonl",
+      "sha256": "c50979e12d7524578d6895a5cd99e35fc080a7d3e1bc07635ce42c0725cee0e5"
+    }
+  },
+  "loci": 5390,
+  "loci_all_agree": 697,
+  "loci_compared": 5387,
+  "loci_without_majority": 127,
+  "profile": "analysis-v1",
+  "source_order": [
+    "ZL",
+    "IT",
+    "IT2a",
+    "CD",
+    "FG",
+    "GC",
+    "RF1b",
+    "VT",
+    "LSI"
+  ],
+  "source_order_file": {
+    "file": "transliterations_report.json",
+    "sha256": "4a731099dbd48c97b38f6d0611760f0cbc383406b0ffeca5a6c2cbdb15b8cdad"
+  },
+  "tokenizer": "vcat/words.py"
+}

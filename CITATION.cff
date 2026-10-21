@@ -9,8 +9,8 @@ abstract: >-
 authors:
   - family-names: Chelednik
     given-names: Noah
-version: 0.1.0
-date-released: 2026-01-17
+version: 1.0.0
+date-released: 2026-10-25
 license: MIT
 repository-code: "https://github.com/noah-chelednik/voynich-data"
 url: "https://github.com/noah-chelednik/voynich-data"

@@ -8,6 +8,7 @@ Tests for the metadata extraction and dataset building functionality.
 from __future__ import annotations
 
 import json
+import re
 import tempfile
 from pathlib import Path
 
@@ -35,6 +36,18 @@ from parsers import (
     UncertainValue,
     extract_all_metadata,
 )
+from vcat.loss_accounting import CACHE_DIR, census_source
+
+
+def source_quire_ids(path: Path) -> set[str]:
+    """Quire ids as the metadata names them (`q<letter>`), read from the source's `$Q=` page variables."""
+    text = path.read_text(encoding="utf-8", errors="surrogateescape")
+    return {f"q{m.group(1)}" for m in re.finditer(r"^<[^.>]+>.*\$Q=(\w)", text, re.M)}
+
+
+def parsed_folio_numbers(pages: list[Page]) -> set[int]:
+    return {int(m.group(1)) for p in pages if (m := re.match(r"f(\d+)", p.page_id))}
+
 
 # =============================================================================
 # Test Fixtures
@@ -176,10 +189,10 @@ def metadata_parser() -> MetadataParser:
 
 @pytest.fixture
 def zl_source_path() -> Path:
-    """Get path to ZL transcription file if available."""
-    path = Path("data_sources/cache/ZL3b-n.txt")
-    if not path.exists():
-        pytest.skip("ZL3b-n.txt not found in cache")
+    """Path to the cached ZL transcription. A missing source FAILS, never skips."""
+    path = CACHE_DIR / "ZL3b-n.txt"
+    if not path.is_file():
+        pytest.fail(f"ZL transcription not found: {path}")
     return path
 
 
@@ -511,9 +524,11 @@ class TestMetadataBuilder:
             result = build_metadata_datasets(zl_source_path, tmpdir)
 
             assert isinstance(result, MetadataBuildResult)
-            assert len(result.pages) > 200
-            assert len(result.folios) > 100
-            assert len(result.quires) > 10
+            pages = list(IVTFFParser().parse_file(zl_source_path))
+            assert {p.page_id for p in result.pages} == {p.page_id for p in pages}
+            assert {p.page_id for p in result.pages} <= set(census_source(zl_source_path).pages)
+            assert {f.folio_number for f in result.folios} == parsed_folio_numbers(pages)
+            assert {q.quire_id for q in result.quires} == source_quire_ids(zl_source_path)
 
     def test_build_report(self, zl_source_path):
         """Test that build produces a valid report."""
@@ -598,7 +613,8 @@ class TestIntegrationWithRealData:
         parser = IVTFFParser()
         pages = list(parser.parse_file(zl_source_path))
 
-        assert len(pages) >= 220
+        assert pages
+        assert {p.page_id for p in pages} <= set(census_source(zl_source_path).pages)
 
     def test_extract_metadata_from_zl(self, zl_source_path):
         """Test extracting metadata from ZL file."""
@@ -607,10 +623,10 @@ class TestIntegrationWithRealData:
 
         result = extract_all_metadata(pages)
 
-        # Verify reasonable counts
-        assert result.total_pages >= 220
-        assert result.total_folios >= 100
-        assert result.total_quires >= 10
+        # Counts follow the parsed pages and the source's own page variables
+        assert result.total_pages == len(pages)
+        assert result.total_folios == len(parsed_folio_numbers(pages))
+        assert result.total_quires == len(source_quire_ids(zl_source_path))
 
         # Verify language distribution
         assert "A" in result.languages

@@ -1,0 +1,188 @@
+{
+  "dataset": "voynich-transliterations",
+  "source_order": [
+    "ZL",
+    "IT",
+    "IT2a",
+    "CD",
+    "FG",
+    "GC",
+    "RF1b",
+    "VT",
+    "LSI"
+  ],
+  "sources": {
+    "CD": {
+      "alphabet": "Currier",
+      "encoding": "utf-8",
+      "file": "data_sources/cache/CD2a-n.txt",
+      "kept": [
+        {
+          "id": "f42v:16",
+          "line": 1192,
+          "reason": "word space '<->' first in the text (IVTFF 2.0 section 6.7)"
+        }
+      ],
+      "kept_with_warning": 1,
+      "pages": 131,
+      "reported": [],
+      "rows": 2196,
+      "sha256": "edc18e6de699c50d575925d4f469685ccbbe22c9755b9b8a3b002f83253cbde5",
+      "source_loci": 2196,
+      "transcribers": [],
+      "upstream_version": "IVTFF version 2a of 02/02/2023"
+    },
+    "FG": {
+      "alphabet": "FSG",
+      "encoding": "utf-8",
+      "file": "data_sources/cache/FG2a-n.txt",
+      "kept": [],
+      "kept_with_warning": 0,
+      "pages": 202,
+      "reported": [],
+      "rows": 4060,
+      "sha256": "a1460a05ff610a406e62b4095a8f8e88c04653c1ef4aa5ad6428ddb1ac01fe06",
+      "source_loci": 4060,
+      "transcribers": [],
+      "upstream_version": "IVTFF version 2a of 02/02/2023"
+    },
+    "GC": {
+      "alphabet": "v101",
+      "encoding": "utf-8",
+      "file": "data_sources/cache/GC2a-n.txt",
+      "kept": [],
+      "kept_with_warning": 0,
+      "pages": 226,
+      "reported": [],
+      "rows": 5367,
+      "sha256": "b09570cb6c993bc2d87134d115e60a978650a8a6495483ddbb1f6005a586096f",
+      "source_loci": 5367,
+      "transcribers": [],
+      "upstream_version": "IVTFF version 2a of 05/02/2023 modified 25/06/2025"
+    },
+    "IT": {
+      "alphabet": "EVA",
+      "encoding": "utf-8",
+      "file": "data_sources/cache/IT_ivtff_1a.txt",
+      "kept": [],
+      "kept_with_warning": 0,
+      "pages": 225,
+      "reported": [],
+      "rows": 5215,
+      "sha256": "db624a731114f26854bbfe3a59d40827fa8911be46d086b6c558d99e557241ee",
+      "source_loci": 5215,
+      "transcribers": [],
+      "upstream_version": "Version 1a of 27/12/2022"
+    },
+    "IT2a": {
+      "alphabet": "EVA",
+      "encoding": "utf-8",
+      "file": "data_sources/cache/IT2a-n.txt",
+      "kept": [],
+      "kept_with_warning": 0,
+      "pages": 225,
+      "reported": [],
+      "rows": 5215,
+      "sha256": "7f27a8b0feed8f6de0a99900df6bf912dd1d295c38e5f830bac8b41c3f536fb5",
+      "source_loci": 5215,
+      "transcribers": [],
+      "upstream_version": "Version 2a of 02/02/2023 modified 25/06/2025"
+    },
+    "LSI": {
+      "alphabet": "EVA",
+      "encoding": "latin-1",
+      "file": "data_sources/cache/latin-1/LSI_ivtff_0d.txt",
+      "kept": [],
+      "kept_with_warning": 0,
+      "pages": 227,
+      "reported": [
+        {
+          "id": "f112v:44a",
+          "line": 37278,
+          "reason": "Unrecognized format: malformed locus identifier"
+        },
+        {
+          "id": "f112v:44a",
+          "line": 37279,
+          "reason": "Unrecognized format: malformed locus identifier"
+        },
+        {
+          "id": "f112v:44a",
+          "line": 37280,
+          "reason": "Unrecognized format: malformed locus identifier"
+        },
+        {
+          "id": "f112v:44a",
+          "line": 37281,
+          "reason": "Unrecognized format: malformed locus identifier"
+        }
+      ],
+      "rows": 17340,
+      "sha256": "3f3f2af18cde10efe75c582f49b07b651c3397022fcbfa5854fecc424c121afa",
+      "source_loci": 17344,
+      "transcribers": [
+        "C",
+        "D",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J",
+        "K",
+        "L",
+        "N",
+        "P",
+        "Q",
+        "R",
+        "T",
+        "U",
+        "V",
+        "X",
+        "Z"
+      ],
+      "upstream_version": "Release 1.6e6 - ?? Dec 1998"
+    },
+    "RF1b": {
+      "alphabet": "EVA",
+      "encoding": "utf-8",
+      "file": "data_sources/cache/RF1b-e.txt",
+      "kept": [],
+      "kept_with_warning": 0,
+      "pages": 227,
+      "reported": [],
+      "rows": 5385,
+      "sha256": "e7d3238e35743e06c63367a933909ec37b1e2de7ada3a1b449447eafa1918782",
+      "source_loci": 5385,
+      "transcribers": [],
+      "upstream_version": "v. 1b"
+    },
+    "VT": {
+      "alphabet": "EVA",
+      "encoding": "utf-8",
+      "file": "data_sources/cache/VT0e-n.txt",
+      "kept": [],
+      "kept_with_warning": 0,
+      "pages": 225,
+      "reported": [],
+      "rows": 5207,
+      "sha256": "e13ba5e073cae54722bc095db8eb9a1aa9c7105f45a70f66a0aad236077f2426",
+      "source_loci": 5207,
+      "transcribers": [],
+      "upstream_version": "v. 0e"
+    },
+    "ZL": {
+      "alphabet": "EVA",
+      "encoding": "utf-8",
+      "file": "data_sources/cache/ZL3b-n.txt",
+      "kept": [],
+      "kept_with_warning": 0,
+      "pages": 227,
+      "reported": [],
+      "rows": 5385,
+      "sha256": "bf5b6d4ac1e3a51b1847a9c388318d609020441ccd56984c901c32b09beccafc",
+      "source_loci": 5385,
+      "transcribers": [],
+      "upstream_version": "Version 3b of 13/05/2025"
+    }
+  }
+}

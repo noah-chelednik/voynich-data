@@ -1,0 +1,81 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Voynich word alignments",
+  "type": "object",
+  "required": [
+    "line_id",
+    "page_id",
+    "frame_reader",
+    "reader",
+    "frame_words",
+    "words",
+    "operations",
+    "matches",
+    "word_agreement"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "line_id": {
+      "type": "string",
+      "description": "The locus id"
+    },
+    "page_id": {
+      "type": "string",
+      "description": "The page"
+    },
+    "frame_reader": {
+      "type": "string",
+      "description": "The reader aligned to: ZL where it holds the locus, else the first reader"
+    },
+    "reader": {
+      "type": "string",
+      "description": "The reader aligned"
+    },
+    "frame_words": {
+      "type": "array",
+      "description": "The frame's words, position by position; null where the reader has a word the frame lacks",
+      "items": {
+        "type": [
+          "string",
+          "null"
+        ]
+      }
+    },
+    "words": {
+      "type": "array",
+      "description": "The reader's words in the same positions; null where the frame has a word the reader lacks",
+      "items": {
+        "type": [
+          "string",
+          "null"
+        ]
+      }
+    },
+    "operations": {
+      "type": "array",
+      "description": "Each position's operation: `match`, `substitute`, `delete` or `insert`",
+      "items": {
+        "enum": [
+          "match",
+          "substitute",
+          "delete",
+          "insert"
+        ]
+      }
+    },
+    "matches": {
+      "type": "integer",
+      "description": "How many positions hold equal words",
+      "minimum": 0
+    },
+    "word_agreement": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "description": "`matches` over the positions; null when neither has a word",
+      "minimum": 0,
+      "maximum": 1
+    }
+  }
+}

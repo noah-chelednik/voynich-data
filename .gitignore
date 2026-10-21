@@ -75,3 +75,10 @@ Thumbs.db
 *.tmp
 *.temp
 *.log
+
+# Offline reference copies for the reviewer (redistribution rights not established; see docs/reference/README.md)
+docs/reference/*
+!docs/reference/README.md
+
+# the local release staging (roadmap item 2.9, builders/stage_release.py): never committed
+release/staging/

@@ -74,8 +74,11 @@ fi
 # Step 4: Run tests
 echo ""
 echo -e "${YELLOW}[4/5] Running tests...${NC}"
-python -m pytest tests/ -q --tb=short 2>/dev/null || {
-    echo -e "${YELLOW}Warning: Some tests failed or pytest not available${NC}"
+# The whole suite, no positional path (pytest.ini's testpaths, the reviewer proofs included); a failure, or a missing
+# pytest, stops the release before anything is packaged (AT3 F2, B-022)
+python -m pytest -q --tb=short || {
+    echo -e "${YELLOW}Tests failed or pytest is not available: no release archive is made${NC}"
+    exit 1
 }
 
 # Step 5: Package

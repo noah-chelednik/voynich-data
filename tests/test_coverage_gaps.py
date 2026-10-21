@@ -185,17 +185,15 @@ random garbage line
 class TestParserInvalidEnums:
     """Tests for parser handling of invalid/empty enum values."""
 
-    def test_empty_position_gracefully_handled(self) -> None:
-        """Test empty position string doesn't crash parser."""
+    def test_missing_locator_is_reported(self) -> None:
+        """A locus code without its locator (IVTFF 2.0 Table 7: three characters) is reported."""
         parser = IVTFFParser(strict=False)
-        # No position modifier (empty string matches [+@=*]?)
         content = """<f1r>
 <f1r.1,P0> text without position modifier"""
         pages = list(parser.parse_string(content))
         assert len(pages) == 1
-        assert len(pages[0].loci) == 1
-        # Position should be None for empty string
-        assert pages[0].loci[0].position is None
+        assert pages[0].loci == []
+        assert [w.locus_id for w in parser.warnings] == ["f1r:1"]
 
     def test_valid_position_is_parsed(self) -> None:
         """Test valid position is correctly parsed."""
@@ -229,8 +227,8 @@ class TestParserInvalidEnums:
         content = """<f1r>
 <f1r.1,@P0> paragraph
 <f1r.2,@L0> label
-<f1r.3,@C0> circle
-<f1r.4,@R0> radius"""
+<f1r.3,@Cc> circle
+<f1r.4,@Ri> radius"""
         pages = list(parser.parse_string(content))
         assert len(pages) == 1
         assert len(pages[0].loci) == 4
@@ -351,7 +349,7 @@ class TestBuildSectionNone:
 class TestExportPandasMissing:
     """Tests for export_to_parquet when pandas is missing."""
 
-    def test_export_parquet_without_pandas(self, tmp_path: Path) -> None:
+    def test_export_parquet_without_pandas(self, tmp_path: Path, structured_layer) -> None:
         """Test that export_to_parquet raises RuntimeError when pandas missing."""
         from builders.build_eva_lines import LineRecord, export_to_parquet
 
@@ -378,6 +376,7 @@ class TestExportPandasMissing:
                 has_high_ascii=False,
                 source="test",
                 source_version="test",
+                **structured_layer("test"),
             )
         ]
 
@@ -760,8 +759,8 @@ class TestLoggingModule:
             exc_info=None,
         )
         output = formatter.format(record)
-        # Check for ANSI color codes
-        assert "\033[" in output or "test" in output  # Either colored or plain
+        # colours forced on: the message is wrapped in ANSI colour codes, never plain (B-083, AT5 F2)
+        assert "\033[" in output and "test" in output
 
     def test_log_debug_function(self) -> None:
         """Test log_debug convenience function."""

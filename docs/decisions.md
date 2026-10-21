@@ -89,7 +89,9 @@ Moderate. Parser could be adapted for other formats, but schema assumptions woul
 ## Decision 2: Stolfi Interlinear Usage
 
 **Date**: 2026-01-17  
-**Status**: Active  
+**Status**: Superseded (2026-10-17, roadmap item 1.8): the mismatch index compares ZL with IT (Takahashi, extracted from
+the Landini-Stolfi interlinear file) and records whether CD, FG and GC hold each locus; no Stolfi interlinear file is cached
+or compared (`data_sources/sources.yaml`, `docs/data_model.md` section 10). Kept as history.  
 **Context**: The Stolfi interlinear file contains valuable historical transcriptions but uses an older format.
 
 ### Options Considered
@@ -168,7 +170,9 @@ Easy. Could add `normalized_line_number` field later without breaking schema.
 ## Decision 4: Text Cleaning Algorithm
 
 **Date**: 2026-01-17  
-**Status**: Active  
+**Status**: Revised (2026-10-17, roadmap items 1.2 and 1.6): `text_raw` is the field that keeps the source text exactly;
+`text` is the same text with its markup, wraps joined and outer whitespace stripped (AD3 F1); `text_clean` is the named profile `analysis-v1` (`vcat/profiles.py`), which keeps the
+first reading of each alternate as decided here and keeps ligature glyphs. The current contract is `docs/data_model.md`.  
 **Context**: Raw transcription text contains markup (comments, alternatives, markers) that must be cleaned for analysis.
 
 ### Options Considered
@@ -212,7 +216,7 @@ Easy. Could add alternative `text_` fields with different processing.
 ## Decision 5: Schema Versioning (Pre-1.0)
 
 **Date**: 2026-01-17  
-**Status**: Active  
+**Status**: Superseded by release 1.0.0 (2026-10-25): the schema is stable under `STABILITY.md` (the EVA, metadata and mismatch cards state it)  
 **Context**: The data model needs to support evolution while setting user expectations.
 
 ### Options Considered
@@ -238,7 +242,7 @@ Use **0.x versioning** with explicit "pre-1.0" documentation.
 
 ### Consequences
 
-- All dataset cards note "pre-1.0, schema may change"
+- All dataset cards noted "pre-1.0, schema may change" through the 0.x releases (until 1.0.0)
 - Breaking changes allowed in 0.x releases
 - Document migration paths when possible
 - Target 1.0 after community validation
@@ -286,7 +290,8 @@ Use **line-level granularity** as the canonical representation.
 - Primary dataset is `voynich-eva:lines`
 - Token-level views become derived configs
 - Page-level stats computed from line aggregation
-- `line_id` is the primary key
+- `line_id` is the key of the EVA rows; in an interlinear source (LSI) a locus has one row per transcriber, keyed by
+  `line_id` and `transcriber`
 
 ### Reversibility
 
@@ -319,8 +324,9 @@ Easy. Token-level config can be added without changing line-level.
 
 ### Consequences
 
-- `line_type` field: "paragraph", "label", "circle", "radius"
-- Dataset includes all loci (4,072 total)
+- `line_type` field: "paragraph", "label", "circle", "radius", "other" (any other locus type the source gives)
+- Dataset includes all loci of every type (written as 4,072 at the time; that parser dropped ZL loci, defect D3 of
+  `docs/ROADMAP.md`; since item 1.1 every source locus is a row or is reported, and the count is the build report's)
 - Statistics can be computed per type
 - Filtering available via dataset API
 

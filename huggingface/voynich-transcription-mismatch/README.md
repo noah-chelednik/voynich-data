@@ -1,6 +1,5 @@
 ---
-license: other
-license_name: research-use
+license: cc-by-4.0
 license_link: LICENSE
 task_categories:
   - other
@@ -26,36 +25,43 @@ configs:
 
 ## Dataset Summary
 
-This dataset provides a line-by-line comparison across five different transcription sources of the Voynich Manuscript. It tracks agreements and disagreements between transcribers, enabling research on transcription uncertainty and consensus.
+This dataset compares two transliterations of the Voynich Manuscript, ZL and IT, locus by locus (every locus type, labels
+included), and records which of five sources (ZL, IT, CD, FG, GC) hold each locus. It records where the two transcribers
+agree and where they differ, for research on transcription uncertainty; it states no consensus reading.
 
 The primary comparison is between EVA-based transcriptions (ZL and IT), with additional tracking of Currier, FSG, and v101 transcription systems.
 
 ## Key Statistics
 
-| Metric | Value |
-|--------|-------|
-| Total lines | 4,072 |
-| Lines with both EVA sources | 4,069 |
-| EVA exact matches | 901 (22.1%) |
-| EVA normalized matches | 293 (7.2%) |
-| EVA high similarity (≥95%, but not identical) | 2,220 (54.6%) |
-| EVA substantive disagreements (<95%) | 655 (16.1%) |
+**Erratum (2026-10-17, roadmap item 1.8).** Version 0.2.3 published that the two EVA transliterations agree on 83.9% of
+lines and disagree substantively on 16.1%. Those numbers were wrong in method: the comparison deleted ligatures and alternate
+readings, fused words at drawing breaks, did not count an uncertain space as a space, covered only the 4,072 loci the old parser
+kept, and counted any line at least 95% similar as agreeing. The index is now built on the named profile `analysis-v1`
+(`vcat/profiles.py`), with exact verdicts and no similarity threshold (`vcat/comparison.py`); the similarity score is kept as a
+description only. The rebuilt comparison:
 
-**The headline finding:** the two major EVA transcriptions are fully identical
-on only **29.3%** of lines (exact + normalized matches), and differ
-substantively on **16.1%**. The remaining 54.6% are close (≥95% similar) but
-not identical. Any analysis built on a single transcription inherits this
-uncertainty — this dataset exists to make it quantifiable.
+<!-- erratum:mismatch-1.8:start (rendered by builders.build_mismatch_index.erratum_table from output/mismatch_report.json; checked by tests/test_mismatch_index.py) -->
+| Verdict, ZL against IT, profile `analysis-v1` | Loci | Share of the 5,214 loci both hold |
+|---|---|---|
+| identical text (`text_raw` equal) | 1,161 | 22.3% |
+| same reading (word sequences equal under the profile) | 1,323 | 25.4% |
+| same reading for some choice among the alternates | 101 | 1.9% |
+| different | 2,629 | 50.4% |
+
+Agreement (identical, same reading, or an alternate's reading): 2,585 of 5,214 loci (49.6%). Different: 2,629 (50.4%), with a median similarity of 0.973 among them. ZL only: 171; IT only: 1.
+<!-- erratum:mismatch-1.8:end -->
 
 ## Transcription Sources
 
-| ID | Name | Alphabet | Lines | Description |
-|----|------|----------|-------|-------------|
-| zl | Zandbergen-Landini | EVA | 4,072 | Primary reference (most complete) |
-| it | Takahashi | EVA | 4,069 | Secondary EVA transcription |
-| cd | Currier/D'Imperio | Currier | 2,154 | Historical Currier alphabet |
-| fg | Friedman Study Group | FSG | 3,980 | NSA research group transcription |
-| gc | Glen Claston | v101 | 4,070 | High-granularity v101 alphabet |
+| ID | Name | Alphabet | In this index |
+|----|------|----------|---------------|
+| zl | Zandbergen-Landini (`ZL3b-n.txt`) | EVA | compared |
+| it | Takahashi (`IT_ivtff_1a.txt`) | EVA | compared |
+| cd | Currier/D'Imperio (`CD2a-n.txt`) | Currier | present or absent only |
+| fg | Friedman Study Group (`FG2a-n.txt`) | FSG | present or absent only |
+| gc | Glen Claston (`GC2a-n.txt`) | v101 | present or absent only |
+
+The loci each source holds, its SHA-256 and every parser warning are in `mismatch_report.json` (`sources`).
 
 ## Dataset Structure
 
@@ -63,52 +69,64 @@ uncertainty — this dataset exists to make it quantifiable.
 
 ```json
 {
-  "page_id": "f1r",
-  "line_number": 1,
+  "comparison_profile": "analysis-v1",
+  "it_locus_type": "@P0",
+  "it_reading": "fachys.ykal.ar.ataiin.shol.shory.cthres.y.kor.sholdy",
+  "it_source_line": 6,
+  "it_text_raw": "<%>fachys.ykal.ar.ataiin.shol.shory.cthres.y.kor.sholdy",
   "line_id": "f1r:1",
-  "zl_text": "fachys.ykal.ar.ataiin.shol.shory.cthres.y.kor.sholdy",
-  "it_text": "fachys.ykal.ar.ataiin.shol.shory.cthres.y.kor.sholdy",
-  "cd_text": "VAS92.9FAE.AR.APAM.ZOE.ZOR9.QOR92.9.FOR.ZOE89",
-  "fg_text": "8ACIS.ICAL.AB.APAM.SOL.SOB2.QPBES.2.COB.SOLD2",
-  "gc_text": "fZC*9S,9kAL,Ar,AtAiiN,Sol,Sor9,C!reS,9,kor,SolD9",
-  "status": "exact_match",
-  "eva_agreement": true,
+  "line_number": 1,
+  "page_id": "f1r",
   "similarity_score": 1.0,
-  "sources_present": ["zl", "it", "cd", "fg", "gc"],
-  "sources_missing": [],
-  "notes": []
+  "sources_present": [
+    "zl",
+    "it",
+    "cd",
+    "fg",
+    "gc"
+  ],
+  "status": "same_reading",
+  "zl_locus_type": "@P0",
+  "zl_reading": "fachys.ykal.ar.ataiin.shol.shory.cthres.y.kor.sholdy",
+  "zl_source_line": 24,
+  "zl_text_raw": "<%>fachys.ykal.ar.ataiin.shol.shory.[cth:oto]res.y.kor.sholdy<!@254;>"
 }
 ```
+
+The first row, as built (`output/mismatch_index.jsonl`).
 
 ### Data Fields
 
 | Field | Type | Description |
-|-------|------|-------------|
-| `page_id` | string | Page identifier |
-| `line_number` | int | Line number within page |
-| `line_id` | string | Unique identifier: `{page_id}:{line_number}` |
-| `zl_text` | string/null | ZL (EVA) transcription |
-| `it_text` | string/null | IT (EVA) transcription |
-| `cd_text` | string/null | Currier transcription |
-| `fg_text` | string/null | FSG transcription |
-| `gc_text` | string/null | v101 transcription |
-| `status` | string | Comparison status (see below) |
-| `eva_agreement` | bool/null | EVA transcriptions agree |
-| `similarity_score` | float/null | Text similarity (0-1) |
-| `sources_present` | list[string] | Sources with this line |
-| `sources_missing` | list[string] | Sources missing this line |
-| `notes` | list[string] | Additional notes |
+|---|---|---|
+| `page_id` | string | IVTFF page name (f1r, f86v3, fRos) |
+| `line_number` | integer | The locus number of the identifier |
+| `line_id` | string | {page_id}:{line_number}, the key shared with the EVA lines dataset |
+| `status` | string | identical: the two text_raw are equal; same_reading: the profile's word sequences are equal (. , and drawing breaks all separate words); alternate_reading: equal for some choice among the alternates; different: none of these; zl_only or it_only: one source has no such locus |
+| `comparison_profile` | string | The normalization profile both texts are read through (vcat.profiles), e.g. analysis-v1 |
+| `zl_text_raw` | string or null | ZL's text_raw, byte for byte, or null |
+| `it_text_raw` | string or null | IT's text_raw, byte for byte, or null |
+| `zl_reading` | string or null | ZL's text under the comparison profile |
+| `it_reading` | string or null | IT's text under the comparison profile |
+| `zl_locus_type` | string or null | ZL's locus code as written (@P0, &Lz) |
+| `it_locus_type` | string or null | IT's locus code as written |
+| `zl_source_line` | integer or null | The line of the locus identifier in ZL3b-n.txt |
+| `it_source_line` | integer or null | The line of the locus identifier in IT_ivtff_1a.txt |
+| `similarity_score` | number or null | difflib ratio of the two first-reading word sequences; a description, never the verdict |
+| `sources_present` | array of string | Which of the five sources ZL, IT, CD, FG and GC hold this locus id; the other cached sources are not evaluated, so their absence here says nothing |
 
 ### Status Values
 
-| Status | Description | Count |
-|--------|-------------|-------|
-| `exact_match` | ZL and IT are identical | 901 |
-| `normalized_match` | Match after removing uncertainty markers | 293 |
-| `high_similarity` | ≥95% similar | 2,220 |
-| `content_mismatch` | <95% similar | 655 |
-| `zl_missing` | Line missing from ZL | 0 |
-| `it_missing` | Line missing from IT | 3 |
+| Status | Meaning |
+|--------|---------|
+| `identical` | the two `text_raw` are the same string |
+| `same_reading` | the word sequences under the comparison profile are the same (`.`, `,` and drawing breaks all separate words) |
+| `alternate_reading` | the word sequences are the same for some choice among the alternate readings |
+| `different` | none of the above |
+| `zl_only` | only ZL has this locus |
+| `it_only` | only IT has this locus |
+
+Their counts are in the table under Key Statistics and in `mismatch_report.json` (`status_counts`).
 
 ## Use Cases
 
@@ -119,66 +137,64 @@ from datasets import load_dataset
 
 ds = load_dataset("Ched-ai/voynich-transcription-mismatch")
 
-# Find lines where transcribers disagree
-mismatches = ds['train'].filter(lambda x: x['status'] == 'content_mismatch')
-print(f"Disagreements: {len(mismatches)}")
+# Loci where the two EVA transliterations read differently
+mismatches = ds['train'].filter(lambda x: x['status'] == 'different')
+print(f"Different: {len(mismatches)}")
 
-# Find low-similarity mismatches
-low_sim = ds['train'].filter(
-    lambda x: x['similarity_score'] is not None and x['similarity_score'] < 0.5
-)
+# The most dissimilar of them (the score describes a difference; it never decides the status)
+low_sim = mismatches.filter(lambda x: x['similarity_score'] < 0.5)
 print(f"Low similarity: {len(low_sim)}")
 ```
 
 ### Robustness Testing
 
-Use this dataset to test whether your analysis results are robust across transcription variants:
+Use this dataset to test whether a result holds in both transliterations:
 
 ```python
-# Check if a pattern appears in both ZL and IT
+# Check if a pattern appears in both readings (under the comparison profile)
 def pattern_in_both(record, pattern):
-    zl_has = pattern in (record['zl_text'] or '')
-    it_has = pattern in (record['it_text'] or '')
+    zl_has = pattern in (record['zl_reading'] or '')
+    it_has = pattern in (record['it_reading'] or '')
     return zl_has and it_has
 ```
 
 ### Cross-Reference with Metadata
 
-Join with voynich-manuscript-metadata to analyze disagreements by section:
+Join with voynich-manuscript-metadata to look at differences by page:
 
 ```python
-# Which sections have most disagreements?
 meta = load_dataset("Ched-ai/voynich-manuscript-metadata", "pages")
-# Create page_id -> section mapping
-# Then filter mismatches by section
+# map page_id to the page record, then group the 'different' rows by it
 ```
 
 ## Dataset Creation
 
 ### Processing
 
-1. Parse all five transcription files (IVTFF format)
-2. Align lines by `line_id` (page:line_number)
-3. Compare EVA transcriptions with normalization
-4. Compute similarity scores for mismatches
-5. Record presence/absence for all sources
+1. Parse ZL and IT (and the other three sources, for presence) with the IVTFF parser; every parser warning goes to the report
+2. Align loci by `line_id` (`page:locus number`)
+3. Read both texts through the normalization profile `analysis-v1` (`vcat/profiles.py`)
+4. Give each locus one exact verdict (`vcat/comparison.py`) and a similarity score as a description
 
 ### Methodology Notes
 
-- **EVA comparison:** Only ZL and IT are directly compared (same alphabet)
-- **Normalization:** Removes uncertainty markers (`?`, `!`, `*`) and editorial brackets
-- **Similarity:** SequenceMatcher ratio (0-1)
-- **High similarity threshold:** ≥0.95
+- **Compared:** only ZL and IT (the same alphabet, EVA)
+- **Profile:** `analysis-v1`: ligature glyphs kept, the first reading of each alternate, drawing breaks as word spaces, `?` and the legacy EVA markers `!` and `*` dropped
+- **Word spaces:** `.`, `,` (an uncertain space) and drawing breaks all separate words
+- **Alternates:** a reading matches either option (`alternate_reading`)
+- **Similarity:** `difflib.SequenceMatcher` ratio of the first-reading word sequences; no threshold
 
-## Considerations
+## Known Limitations
 
-### Limitations
+- **Two transliterations only.** CD, FG and GC use other alphabets; their texts are not compared.
+- **Alignment by locus id.** Loci that the two transliterations number differently are compared as different loci.
+- **One comparison profile.** The verdicts are those of `analysis-v1`; another profile can turn a `different` locus into
+  `same_reading` or back (the rules are in `docs/data_model.md`).
+- **No consensus.** The index says where the two differ; it never chooses a reading.
+- **The similarity score describes, it never decides.** It ranks how far apart two readings are; no threshold sets a status.
+- **Stable schema.** From 1.0.0, field names and meanings change only as `STABILITY.md` allows (a major version).
 
-- **Cross-alphabet comparison not attempted:** CD, FG, GC use different alphabets; direct text comparison not meaningful
-- **Line alignment by ID:** May miss reflow differences where transcribers split lines differently
-- **Normalization choices:** May hide meaningful distinctions
-
-### Why Transcriptions Disagree
+## Why Transcriptions Disagree
 
 - **Glyph identification:** Scribal hands are difficult to read
 - **Character boundaries:** Where one glyph ends and another begins
@@ -190,7 +206,7 @@ meta = load_dataset("Ched-ai/voynich-manuscript-metadata", "pages")
 
 This dataset is part of the **Voynich Computational Analysis Toolkit (VCAT)**:
 
-- [voynich-eva](https://huggingface.co/datasets/Ched-ai/voynich-eva): Complete EVA transcription
+- [voynich-eva](https://huggingface.co/datasets/Ched-ai/voynich-eva): one row per locus of the ZL transliteration
 - [voynich-manuscript-metadata](https://huggingface.co/datasets/Ched-ai/voynich-manuscript-metadata): Page, folio, quire metadata
 
 ## Quick Start
@@ -198,25 +214,21 @@ This dataset is part of the **Voynich Computational Analysis Toolkit (VCAT)**:
 ```python
 from datasets import load_dataset
 
-ds = load_dataset("Ched-ai/voynich-transcription-mismatch")
-
-# Summary statistics
-total = len(ds['train'])
-exact = len(ds['train'].filter(lambda x: x['status'] == 'exact_match'))
-normalized = len(ds['train'].filter(lambda x: x['status'] == 'normalized_match'))
-high_sim = len(ds['train'].filter(lambda x: x['status'] == 'high_similarity'))
-mismatch = len(ds['train'].filter(lambda x: x['status'] == 'content_mismatch'))
-
-print(f"Fully identical:          {(exact + normalized) / total:.1%}")
-print(f"Close but not identical:  {high_sim / total:.1%}")
-print(f"Substantive disagreement: {mismatch / total:.1%}")
+ds = load_dataset("Ched-ai/voynich-transcription-mismatch")["train"]
+both = ds.filter(lambda x: x['status'] not in ('zl_only', 'it_only'))
+agree = both.filter(lambda x: x['status'] != 'different')
+print(f"Agreement over the loci both hold: {len(agree) / len(both):.1%}")
 ```
 
 ## Licensing
 
-**Processing code and dataset structure:** MIT License
+**VCAT's comparison** (the verdicts, statuses and similarity scores): CC-BY-4.0. **The text of the rows:** CC0-1.0. It is
+read from two transliterations, ZL and IT (Takahashi), and the rows also record whether CD, FG and GC hold each locus
+(none of their text). voynich.nu makes every one of these transliterations available under CC0; the statement was read at
+its source and is recorded in `data_sources/sources.yaml`. The dataset as a whole is offered under CC-BY-4.0.
 
-**Underlying transcription data:** The five source transcriptions (ZL, IT, CD, FG, GC) are scholarly works whose authors have not published explicit license statements. They are publicly distributed for research via [voynich.nu](https://voynich.nu). This dataset is released as a **research resource**: cite the original transcribers, and verify rights independently for commercial applications. See [SOURCES_LICENSE.md](https://github.com/noah-chelednik/voynich-data/blob/main/docs/SOURCES_LICENSE.md) for full provenance details.
+Please cite the transliterators in published work. **Code:** MIT (the repository's `LICENSE`). Per-source details:
+[SOURCES_LICENSE.md](https://github.com/noah-chelednik/voynich-data/blob/main/docs/SOURCES_LICENSE.md).
 
 ## Citation
 

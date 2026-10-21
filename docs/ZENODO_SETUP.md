@@ -19,13 +19,18 @@ Zenodo provides:
 3. Go to Settings → GitHub
 4. Find `noah-chelednik/voynich-data` and flip the toggle ON
 
-### 2. Create a Release
+### 2. Create the releases
 
-1. On GitHub, go to Releases → Create a new release
-2. Tag: `v0.1.0`
-3. Title: `VCAT Data v0.1.0 - Initial Release`
-4. Description: Copy from CHANGELOG.md
-5. Publish release
+The old state is frozen first, so users of the 0.2.3 data can cite and pin it before anything changes (`docs/ROADMAP.md`
+item 1.0):
+
+1. On GitHub, go to Releases → Draft a new release; tag `v0.2.3` on commit `472ef73` (the published `main`); title
+   `VCAT Data v0.2.3`; description: the 0.2.3 entry of CHANGELOG.md; publish. Zenodo archives it and gives it a DOI.
+   That commit holds no `.zenodo.json`, and its `CITATION.cff` says version 0.1.0 (dated 2026-01-17): if the archived
+   record shows that version or that date, edit them to 0.2.3 and 2026-01-18 (the CHANGELOG's
+   0.2.3 date) on the record's page on Zenodo afterwards.
+2. Then, after `main` holds 1.0.0, a second release: tag `v1.0.0`; title `VCAT Data v1.0.0`; description: the 1.0.0
+   entry of CHANGELOG.md (with its migration notes); publish. Zenodo reads `.zenodo.json` for its metadata.
 
 ### 3. Get Your DOI
 

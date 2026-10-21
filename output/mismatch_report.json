@@ -1,31 +1,59 @@
 {
-  "sources_loaded": [
-    "zl",
-    "it",
-    "cd",
-    "fg",
-    "gc"
-  ],
-  "total_lines": 4072,
-  "exact_matches": 901,
-  "normalized_matches": 293,
-  "content_mismatches": 655,
-  "zl_only_lines": 3,
-  "it_only_lines": 0,
-  "both_eva_present": 4069,
-  "per_source_counts": {
-    "zl": 4072,
-    "it": 4069,
-    "cd": 2154,
-    "fg": 3980,
-    "gc": 4070
+  "agreeing": 2585,
+  "agreement_rate": 0.4957805907172996,
+  "both_present": 5214,
+  "comparison_profile": "analysis-v1",
+  "different_rate": 0.5042194092827004,
+  "different_similarity": {
+    "count": 2629,
+    "median": 0.972973
   },
-  "high_similarity_matches": 2220,
-  "total_agreeing": 3414,
-  "agreement_rate": 0.8390267879085771,
-  "eva_coverage": {
-    "zl": 4072,
-    "it": 4069,
-    "both": 4069
-  }
+  "sources": {
+    "cd": {
+      "file": "CD2a-n.txt",
+      "loci_emitted": 2196,
+      "reported_loci": [],
+      "sha256": "edc18e6de699c50d575925d4f469685ccbbe22c9755b9b8a3b002f83253cbde5",
+      "warnings": [
+        "line 1192 (f42v:16): word space '<->' first in the text (IVTFF 2.0 section 6.7)"
+      ]
+    },
+    "fg": {
+      "file": "FG2a-n.txt",
+      "loci_emitted": 4060,
+      "reported_loci": [],
+      "sha256": "a1460a05ff610a406e62b4095a8f8e88c04653c1ef4aa5ad6428ddb1ac01fe06",
+      "warnings": []
+    },
+    "gc": {
+      "file": "GC2a-n.txt",
+      "loci_emitted": 5367,
+      "reported_loci": [],
+      "sha256": "b09570cb6c993bc2d87134d115e60a978650a8a6495483ddbb1f6005a586096f",
+      "warnings": []
+    },
+    "it": {
+      "file": "IT_ivtff_1a.txt",
+      "loci_emitted": 5215,
+      "reported_loci": [],
+      "sha256": "db624a731114f26854bbfe3a59d40827fa8911be46d086b6c558d99e557241ee",
+      "warnings": []
+    },
+    "zl": {
+      "file": "ZL3b-n.txt",
+      "loci_emitted": 5385,
+      "reported_loci": [],
+      "sha256": "bf5b6d4ac1e3a51b1847a9c388318d609020441ccd56984c901c32b09beccafc",
+      "warnings": []
+    }
+  },
+  "status_counts": {
+    "alternate_reading": 101,
+    "different": 2629,
+    "identical": 1161,
+    "it_only": 1,
+    "same_reading": 1323,
+    "zl_only": 171
+  },
+  "total_lines": 5386
 }

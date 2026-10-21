@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "vcat-data"
-version = "0.2.3"
+version = "1.0.0"
 description = "Data processing infrastructure for the Voynich Computational Analysis Toolkit"
 readme = "README.md"
 license = {text = "MIT"}
@@ -49,6 +49,11 @@ dev = [
     "types-PyYAML",
     "ipython>=8.0",
     "jupyter>=1.0",
+    # building the package without isolation, as the suite does (review 494bb9ab finding 3)
+    "setuptools>=70.1",
+    "wheel",
+    # the CommonMark parser the card tests read fenced examples with (review f66f47d9 finding 2)
+    "markdown-it-py>=3.0",
 ]
 
 [project.urls]
@@ -62,11 +67,28 @@ vcat-verify = "data_sources.verify_sources:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["vcat*", "parsers*", "builders*", "validators*", "hf*"]
+include = ["vcat*", "parsers*", "builders*", "validators*", "hf*", "data_sources", "schemas"]
+
+# The source registry ships with the package, so an installed builder can import it (vcat.sources reads
+# data_sources/sources.yaml beside the vcat package; review 494bb9ab finding 3). The cached files themselves do not ship.
+[tool.setuptools.package-data]
+# and the layer registry the metadata builder publishes and the validators check (review 7454c2f9 finding 2)
+# and the canvases of Yale's IIIF manifest the page links are read from (roadmap item 2.4)
+data_sources = ["sources.yaml", "layers.yaml", "iiif/*.json"]
+# The schemas `validators.load_schema` reads (AV7 F6)
+schemas = ["*.json"]
 
 [tool.ruff]
 target-version = "py311"
 line-length = 100
+# never edited here, so the host's lint and format rules do not apply to them.
+extend-exclude = [
+    # Reviewer proofs, copied in unchanged from the reviewer's artifact (DECISIONS Q9, Q11).
+    "tests/regressions",
+    "tests/regressions",
+    # Reviewer proofs an artifact places directly under tests/ (AD1 F3, F4; DECISIONS Q50).
+    "tests/test_audit_*.py",
+]
 
 [tool.ruff.lint]
 select = [
@@ -91,6 +113,7 @@ ignore = [
 [tool.black]
 line-length = 100
 target-version = ['py311']
+extend-exclude = '^/(tests/regressions/.*|tests/test_audit_[^/]*\.py)$'
 
 [tool.mypy]
 python_version = "3.11"
@@ -99,13 +122,7 @@ warn_unused_ignores = true
 disallow_untyped_defs = true
 ignore_missing_imports = true
 
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = ["test_*.py"]
-addopts = "-v --tb=short"
-filterwarnings = [
-    "ignore::DeprecationWarning",
-]
+# pytest is configured in pytest.ini only (B-005, DECISIONS Q5).
 
 [tool.coverage.run]
 source = ["vcat", "parsers", "builders", "validators"]

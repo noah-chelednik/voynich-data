@@ -1,53 +1,83 @@
 # Source Transcription Provenance and Licensing
 
-This project builds datasets derived from five scholarly transcriptions of
-the Voynich Manuscript (Beinecke MS 408, Yale University). This document
-states, as plainly as possible, what we know about the rights status of each
-source and what that means for users of the derived datasets.
+What VCAT knows about the rights of each source, what it redistributes, and under what terms it offers its own outputs. The
+record is `data_sources/sources.yaml`; the tables below are rendered from it and from the dataset cards
+(`builders.cards`, checked by `tests/test_sources.py`).
 
 ## The short version
 
-- The **manuscript itself** is in the public domain (15th century).
-- The **transcriptions** are scholarly works created by individual
-  researchers. None of them carries a formal license statement.
-- All five are **publicly distributed for research** via
-  [voynich.nu](https://www.voynich.nu/), maintained by René Zandbergen.
-- The **VCAT processing code** is MIT-licensed.
-- The **derived datasets** are published as research resources
-  (`license: other`, `license_name: research-use` on Hugging Face):
-  research and educational use is the intended purpose; cite the original
-  transcribers; for commercial use, verify rights independently and contact
-  the transcription authors.
+- The **manuscript itself** (Beinecke MS 408, Yale University) is in the public domain.
+- **Every transliteration VCAT caches or pins** (ZL, IT, CD, FG, GC, RF1b, VT, LSI, and RF1b's basic form, which is pinned
+  but not cached) is
+  CC0-1.0: voynich.nu, which publishes them, states so for the files its tables of transliterations link, and each file is
+  linked from one of those tables. The statement was read at its source on 2026-10-17 (S12) and is quoted below.
+- **VCAT's code** is MIT. **Data VCAT derives** is CC0-1.0 where every source it derives from is CC0-1.0; **VCAT's own
+  annotations** (section attributions and confidences, comparison verdicts and scores) are CC-BY-4.0.
 
-We believe this is an honest description of the actual rights situation.
-We deliberately do not claim a Creative Commons or other formal license over
-the transcription text, because the underlying rights are not ours to grant.
+## The upstream statement
 
-## Per-source detail
+From voynich.nu, "Licences and copyright" (https://www.voynich.nu/roadmap.html), read 2026-10-17:
 
-| ID | Source | Authors | Alphabet | Distribution |
-|----|--------|---------|----------|--------------|
-| ZL | Zandbergen-Landini v3b | René Zandbergen, Gabriel Landini | EVA | voynich.nu, research use |
-| IT | Takahashi | Takeshi Takahashi | EVA | voynich.nu mirror, research use |
-| CD | Currier/D'Imperio | Prescott Currier, Mary D'Imperio | Currier | Historical (1970s, NSA-adjacent research), voynich.nu mirror |
-| FG | Friedman Study Group | First Study Group / William Friedman | FSG | Historical (1940s-50s), voynich.nu mirror |
-| GC | Glen Claston | Glen Claston (Tim Rayhel) | v101 | voynich.nu mirror, research use |
+> "The transliterations of the Voynich MS text, as collected in tables here, here and here, have been collected from different sources and have always been in the public domain. More specifically, they are being made available at this web site in accordance with the Creative Commons CC0 licence"
 
-Exact source files, URLs, and SHA256 checksums are recorded in
-[`data_sources/sources.yaml`](../data_sources/sources.yaml) and
-`data_sources/checksums_all.txt`.
+The three "here" are links to these tables, and every source file below is linked from one of them (its `listed_at` in
+`data_sources/sources.yaml`):
 
-## What this project redistributes
+- https://www.voynich.nu/transcr.html#links
+- https://www.voynich.nu/extra/legacy.html
+- https://www.voynich.nu/extra/sta.html#stalinks
 
-- **Derived line records** (parsed, cleaned, validated text with metadata),
-  not the original source files themselves.
-- **Build scripts** that let anyone re-derive the datasets from the original
-  sources.
-- **Statistics and indexes** (e.g., the cross-transcription mismatch index).
+The same section asks users of the site's material to acknowledge it; VCAT's cards cite the transliterators and voynich.nu.
+The statement covers the transliterations only: the Voynich script fonts on the site have their own terms, and VCAT bundles
+none of them.
+
+## Per-source matrix
+
+<!-- license:matrix:start (rendered by builders.cards.license_matrix from data_sources/sources.yaml) -->
+| Source | File | License | Basis | Verified | Redistributed here | Used by |
+|---|---|---|---|---|---|---|
+| ZL | `data_sources/cache/ZL3b-n.txt` | CC0-1.0 | voynich.nu's statement (license_statement): the transliterations collected in its tables are made available under CC0; this file is linked from https://www.voynich.nu/transcr.html#links | yes | yes | voynich-eva, voynich-manuscript-metadata, voynich-transcription-mismatch, voynich-transliterations |
+| IT | `data_sources/cache/IT_ivtff_1a.txt` | CC0-1.0 | voynich.nu's statement (license_statement): the transliterations collected in its tables are made available under CC0; this file is linked from https://www.voynich.nu/extra/legacy.html | yes | yes | voynich-eva, voynich-transcription-mismatch, voynich-transliterations |
+| IT2a | `data_sources/cache/IT2a-n.txt` | CC0-1.0 | voynich.nu's statement (license_statement): the transliterations collected in its tables are made available under CC0; this file is linked from https://www.voynich.nu/transcr.html#links | yes | yes | voynich-eva, voynich-transliterations |
+| CD | `data_sources/cache/CD2a-n.txt` | CC0-1.0 | voynich.nu's statement (license_statement): the transliterations collected in its tables are made available under CC0; this file is linked from https://www.voynich.nu/transcr.html#links | yes | yes | voynich-eva, voynich-transcription-mismatch, voynich-transliterations |
+| FG | `data_sources/cache/FG2a-n.txt` | CC0-1.0 | voynich.nu's statement (license_statement): the transliterations collected in its tables are made available under CC0; this file is linked from https://www.voynich.nu/transcr.html#links | yes | yes | voynich-eva, voynich-transcription-mismatch, voynich-transliterations |
+| GC | `data_sources/cache/GC2a-n.txt` | CC0-1.0 | voynich.nu's statement (license_statement): the transliterations collected in its tables are made available under CC0; this file is linked from https://www.voynich.nu/transcr.html#links | yes | yes | voynich-eva, voynich-transcription-mismatch, voynich-transliterations |
+| RF1b | `data_sources/cache/RF1b-e.txt` | CC0-1.0 | voynich.nu's statement (license_statement): the transliterations collected in its tables are made available under CC0; this file is linked from https://www.voynich.nu/transcr.html#links | yes | yes | voynich-eva, voynich-transliterations |
+| VT | `data_sources/cache/VT0e-n.txt` | CC0-1.0 | voynich.nu's statement (license_statement): the transliterations collected in its tables are made available under CC0; this file is linked from https://www.voynich.nu/transcr.html#links | yes | yes | voynich-eva, voynich-transliterations |
+| LSI | `data_sources/cache/latin-1/LSI_ivtff_0d.txt` | CC0-1.0 | voynich.nu's statement (license_statement): the transliterations collected in its tables are made available under CC0; this file is linked from https://www.voynich.nu/transcr.html#links | yes | yes | voynich-eva, voynich-transliterations |
+<!-- license:matrix:end -->
+
+"Verified" is yes when the statement has been read at its source and quoted in this document (S12).
+
+## Pinned but not cached
+
+`data_sources/sources.yaml` lists under `not_cached` the files VCAT pins by URL and SHA-256 but does not commit, each with its
+reason: the basic-EVA form of RF1b (VCAT caches the full form). It is CC0-1.0 by the statement above. The Landini-Stolfi
+interlinear file (LSI) was pinned here at S12 and is cached since S13.
+
+## What this repository redistributes
+
+- **The source files themselves.** Every cached file is committed in `data_sources/cache/` (the matrix's "Redistributed
+  here"), so that every build and test can be rerun from a checkout; the CC0 statement permits this.
+- **The derived datasets** (`output/`), built from those files by the builders.
+- **The build and test code**, so anyone can rebuild the datasets from the original sources.
+
+## Each dataset's license
+
+<!-- license:datasets:start (rendered by builders.cards.dataset_license_table from data_sources/sources.yaml and the cards) -->
+| Dataset | Sources | VCAT annotations | Card license |
+|---|---|---|---|
+| voynich-eva | ZL, IT, IT2a, CD, FG, GC, RF1b, VT, LSI | yes | `cc-by-4.0` |
+| voynich-manuscript-metadata | ZL | yes | `cc-by-4.0` |
+| voynich-transcription-mismatch | ZL, IT, CD, FG, GC | yes | `cc-by-4.0` |
+| voynich-transliterations | ZL, IT, IT2a, CD, FG, GC, RF1b, VT, LSI | yes | `cc-by-4.0` |
+<!-- license:datasets:end -->
+
+The rule (`data_sources/sources.yaml`, `outputs`): every source CC0-1.0 and no VCAT annotations gives `cc0-1.0`; every
+source CC0-1.0 with VCAT annotations gives `cc-by-4.0` (the source-derived fields stay CC0-1.0, as the card says); a source
+under any other license would give `other`, with each source's terms.
 
 ## If you are a rights holder
 
-If you are an author of one of these transcriptions and would like the
-attribution changed, the terms clarified, or content removed, please
-[open an issue](https://github.com/noah-chelednik/voynich-data/issues) —
-it will be acted on promptly.
+If you are an author of one of these transcriptions and would like the attribution changed, the terms clarified, or content
+removed, please [open an issue](https://github.com/noah-chelednik/voynich-data/issues); it will be acted on promptly.

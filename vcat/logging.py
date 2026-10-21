@@ -231,12 +231,39 @@ class ContextAdapter(logging.LoggerAdapter):
 # Module-level logger cache
 _loggers: dict[str, ContextAdapter] = {}
 
+# The package's logging configuration (B-060): the stream given to configure_logging, and the
+# loggers outside the "vcat" hierarchy that get_logger has given their own handler. Loggers named
+# "vcat" or "vcat.<child>" have no handler of their own: they pass their records to "vcat", whose
+# handler and level configure_logging sets, so a child obeys the package configuration.
+_PACKAGE = "vcat"
+_stream: Any = None
+_independent: set[str] = set()
+
+
+def _in_package(name: str) -> bool:
+    return name == _PACKAGE or name.startswith(_PACKAGE + ".")
+
+
+def _install_handler(logger: logging.Logger) -> None:
+    """Give the logger one handler on the configured stream, at the configured level and format."""
+    level = getattr(logging, os.environ.get("VCAT_LOG_LEVEL", "INFO").upper(), logging.INFO)
+    log_format = os.environ.get("VCAT_LOG_FORMAT", "text").lower()
+    logger.handlers.clear()
+    logger.setLevel(level)
+    handler = logging.StreamHandler(_stream or sys.stderr)
+    handler.setLevel(level)
+    handler.setFormatter(StructuredFormatter() if log_format == "json" else ColoredFormatter())
+    logger.addHandler(handler)
+    # Prevent propagation to the Python root logger
+    logger.propagate = False
+
 
 def get_logger(name: str | None = None) -> ContextAdapter:
     """Get a configured logger instance.
 
-    Returns a logger with structured logging support. The logger
-    format and level can be configured via environment variables.
+    Returns a logger with structured logging support. A logger named "vcat" or "vcat.<child>"
+    writes through the package logger "vcat" (its stream, level and format, as configure_logging
+    or the environment set them); any other name gets its own handler, configured the same way.
 
     Args:
         name: Logger name (typically __name__). If None, returns
@@ -250,37 +277,25 @@ def get_logger(name: str | None = None) -> ContextAdapter:
         >>> logger.info("Processing complete", records=100)
     """
     if name is None:
-        name = "vcat"
+        name = _PACKAGE
 
     # Return cached logger if exists
     if name in _loggers:
         return _loggers[name]
 
-    # Get configuration from environment
-    log_level = os.environ.get("VCAT_LOG_LEVEL", "INFO").upper()
-    log_format = os.environ.get("VCAT_LOG_FORMAT", "text").lower()
-
-    # Create logger
     logger = logging.getLogger(name)
-
-    # Only configure if not already configured
-    if not logger.handlers:
-        logger.setLevel(getattr(logging, log_level, logging.INFO))
-
-        # Create handler
-        handler = logging.StreamHandler(sys.stderr)
-        handler.setLevel(logger.level)
-
-        # Set formatter based on configuration
-        if log_format == "json":
-            handler.setFormatter(StructuredFormatter())
-        else:
-            handler.setFormatter(ColoredFormatter())
-
-        logger.addHandler(handler)
-
-        # Prevent propagation to root logger
-        logger.propagate = False
+    if _in_package(name):
+        package = logging.getLogger(_PACKAGE)
+        if not package.handlers:
+            _install_handler(package)
+        if name != _PACKAGE:
+            # No handler and no level of its own: the package logger decides (B-060)
+            logger.handlers.clear()
+            logger.setLevel(logging.NOTSET)
+            logger.propagate = True
+    elif not logger.handlers:
+        _install_handler(logger)
+        _independent.add(name)
 
     # Wrap in adapter for context support
     adapter = ContextAdapter(logger, {})
@@ -296,8 +311,8 @@ def configure_logging(
 ) -> None:
     """Configure logging for the entire VCAT package.
 
-    This is typically called once at application startup to
-    configure all VCAT loggers.
+    Sets the level, format and stream of the package logger "vcat" (which every "vcat.<child>"
+    logger writes through) and of every other logger get_logger has configured.
 
     Args:
         level: Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL).
@@ -307,30 +322,19 @@ def configure_logging(
     Example:
         >>> configure_logging(level="DEBUG", format="json")
     """
+    global _stream
+
     # Clear cached loggers
     _loggers.clear()
 
     # Set environment variables for subsequent get_logger calls
     os.environ["VCAT_LOG_LEVEL"] = level.upper()
     os.environ["VCAT_LOG_FORMAT"] = format.lower()
+    _stream = stream
 
-    # Configure root vcat logger
-    root_logger = logging.getLogger("vcat")
-    root_logger.handlers.clear()
-    root_logger.setLevel(getattr(logging, level.upper(), logging.INFO))
-
-    # Create handler
-    handler = logging.StreamHandler(stream or sys.stderr)
-    handler.setLevel(root_logger.level)
-
-    # Set formatter
-    if format.lower() == "json":
-        handler.setFormatter(StructuredFormatter())
-    else:
-        handler.setFormatter(ColoredFormatter())
-
-    root_logger.addHandler(handler)
-    root_logger.propagate = False
+    _install_handler(logging.getLogger(_PACKAGE))
+    for name in sorted(_independent):
+        _install_handler(logging.getLogger(name))
 
 
 # Convenience function for quick debug logging

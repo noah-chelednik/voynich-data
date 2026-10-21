@@ -21,10 +21,14 @@ def strip_ivtff_markup(text: str) -> str:
     This produces the "flag basis" - the text used to compute
     has_uncertain and has_illegible flags.
 
-    Removes:
-    - Curly brace comments: {like this}
+    Removes (DECISIONS Q26, items 1.3 for D1 and D2):
+    - In-line comments: <!...> (first, so their contents never leak)
     - Alternative brackets: [a:b] -> a (keeps first option)
-    - All angle-bracket tags: <...>
+    - Ligature braces: {ct} -> ct (the glyphs are kept; braces mark a ligature, IVTFF 2.0 Table 10)
+    - Every other angle-bracket tag: <%>, <$>, <@X=y>
+
+    Replaces:
+    - Drawing interruptions <-> and <~> -> "." (a word space, IVTFF 2.0 Table 11)
 
     Preserves:
     - Uncertainty markers: ?, !, *
@@ -37,17 +41,21 @@ def strip_ivtff_markup(text: str) -> str:
     Returns:
         Text with markup stripped but uncertainty markers intact
     """
-    result = text
+    # Remove in-line comments first: they are free text and may hold any character
+    result = re.sub(r"<![^>]*>", "", text)
 
-    # Remove curly brace comments
-    result = re.sub(r"\{[^}]*\}", "", result)
+    # A drawing interruption is a word boundary (D2)
+    result = re.sub(r"<[-~]>", ".", result)
+
+    # Remove every other angle-bracket tag (<%>, <$>, <@X=y>)
+    result = re.sub(r"<[^>]*>", "", result)
 
     # Handle alternatives [a:b] - keep first option
     # Uses * not + to handle empty alternatives like [:ch] or [a:]
     result = re.sub(r"\[([^:\]]*):([^\]]*)\]", lambda m: m.group(1), result)
 
-    # Remove all angle-bracket tags (catches <->, <$>, <%>, <~>, <!...>, etc.)
-    result = re.sub(r"<[^>]*>", "", result)
+    # A ligature keeps its glyphs (D1)
+    result = re.sub(r"\{([^}]*)\}", r"\1", result)
 
     # Normalize whitespace
     result = re.sub(r"\s+", " ", result).strip()
@@ -57,31 +65,23 @@ def strip_ivtff_markup(text: str) -> str:
 
 def clean_text_for_analysis(text: str) -> str:
     """
-    Produce analysis-ready text (text_clean).
+    Produce analysis-ready text (text_clean): the normalization profile ``analysis-v1``.
 
-    This is the final cleaned text for computational analysis.
-    It has all markup AND uncertainty markers removed.
+    ``text_clean`` is an alias for that profile (roadmap item 1.6, DECISIONS Q39): a ligature's
+    glyphs without braces, the first reading of each alternate, ``<->`` and ``<~>`` as ``.``, ``?``
+    and the legacy EVA markers ``!`` and ``*`` dropped, ``,`` kept, comments, paragraph marks, text
+    tags, whitespace and wraps removed. Every other glyph is kept as written: the earlier
+    lower-casing of ``I`` corrected the transliteration and is gone (ZL f57v.3; D6).
 
     Args:
         text: Raw IVTFF transcription text
 
     Returns:
-        Clean text suitable for analysis (no markup, no uncertainty markers)
+        The analysis-v1 reading of the text
     """
-    # First strip markup
-    result = strip_ivtff_markup(text)
+    from vcat.profiles import TEXT_CLEAN_PROFILE, apply_profile
 
-    # Then remove uncertainty markers (they're preserved in flags)
-    result = re.sub(r"[?!*]", "", result)
-
-    # Handle known transcription errors:
-    # - Uppercase 'I' appears once (f48r.13) - lowercase it
-    result = result.replace("I", "i")
-
-    # Final whitespace normalization
-    result = re.sub(r"\s+", " ", result).strip()
-
-    return result
+    return apply_profile(TEXT_CLEAN_PROFILE, text)
 
 
 def compute_flags(text: str) -> tuple[bool, bool, bool]:
@@ -102,7 +102,8 @@ def compute_flags(text: str) -> tuple[bool, bool, bool]:
 
     has_uncertain = "?" in flag_basis
     has_illegible = "!" in flag_basis or "*" in flag_basis
-    has_alternatives = "[" in text and ":" in text
+    # An alternate outside the comments (the row's `alternates` field is not empty; Q25)
+    has_alternatives = bool(re.search(r"\[[^\]]*:[^\]]*\]", re.sub(r"<![^>]*>", "", text)))
 
     return (has_uncertain, has_illegible, has_alternatives)
 

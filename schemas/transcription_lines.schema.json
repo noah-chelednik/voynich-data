@@ -2,12 +2,17 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Voynich Transcription Lines",
   "type": "object",
-  "required": ["page_id", "line_number", "line_index", "line_id", "text", "source"],
+  "required": [
+    "page_id", "line_number", "line_index", "line_id", "text", "source",
+    "text_raw", "locus_type", "source_line",
+    "alternates", "ligatures", "uncertain_spaces", "illegible", "high_ascii",
+    "comments", "drawing_breaks", "markers"
+  ],
   "properties": {
     "page_id": {
       "type": "string",
-      "pattern": "^f\\d+[rv]\\d*$",
-      "description": "Normalized page identifier (e.g., f1r, f85v3)"
+      "pattern": "^(f\\d+[rv]\\d*|fRos)$",
+      "description": "IVTFF page name (e.g., f1r, f86v3, fRos)"
     },
     "line_number": {
       "type": "integer",
@@ -21,16 +26,70 @@
     },
     "line_id": {
       "type": "string",
-      "pattern": "^f\\d+[rv]\\d*:\\d+$",
+      "pattern": "^(f\\d+[rv]\\d*|fRos):\\d+$",
       "description": "Unique line identifier: {page_id}:{line_number}"
     },
     "text": {
       "type": "string",
-      "description": "Raw transcription text for this line (with IVTFF markup)"
+      "description": "Transcription text for this line with IVTFF markup, stripped, continuation lines joined (text_raw is the exact source text)"
+    },
+    "text_raw": {
+      "type": "string",
+      "description": "The transliterated text exactly as in the source: after the locus identifier and the whitespace that follows it, to the end of the line (a wrapped locus keeps its continuation lines and line terminators)"
+    },
+    "locus_type": {
+      "type": "string",
+      "pattern": "^[@+*=&~/!](P[01bcrt]|L[0acfnpstxz]|C[ac]|R[io])$",
+      "description": "The IVTFF locus code as written, locator and locus type (IVTFF 2.0 Tables 8 and 9), e.g. @P0, &Lz"
+    },
+    "source_line": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "1-based line number of the locus identifier in the source file"
+    },
+    "alternates": {
+      "type": "array",
+      "items": {"type": "array", "items": {"type": "string"}, "minItems": 2},
+      "description": "The readings of each uncertain reading [a:b] or [a:b:c], as written, most likely first"
+    },
+    "ligatures": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "description": "The characters of each ligature {...}, as written"
+    },
+    "uncertain_spaces": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of uncertain word spaces (,)"
+    },
+    "illegible": {
+      "type": "array",
+      "items": {"type": "string", "pattern": "^\\?+$"},
+      "description": "Each run of unreadable characters (?, or ??? for an unknown number), as written"
+    },
+    "high_ascii": {
+      "type": "array",
+      "items": {"type": "integer", "minimum": 128, "maximum": 255},
+      "description": "Each high-ASCII code @NNN; in the transliterated text (not in comments)"
+    },
+    "comments": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "The text of each in-line comment <!...>"
+    },
+    "drawing_breaks": {
+      "type": "array",
+      "items": {"type": "string", "enum": ["<->", "<~>"]},
+      "description": "Each interruption by a drawing, as written (a word space)"
+    },
+    "markers": {
+      "type": "array",
+      "items": {"type": "string", "pattern": "^(<%>|<\\$>|<@[A-Z]=[^<>\\s]>)$"},
+      "description": "Each paragraph start <%>, paragraph end <$> and text tag <@X=y>, as written"
     },
     "text_clean": {
       "type": "string",
-      "description": "Cleaned text (markup removed, @NNN; codes preserved - lossless)"
+      "description": "The normalization profile analysis-v1 of text_raw (vcat.profiles; the build report's text_clean_policy): ligature glyphs without braces, the first reading of each alternate, <-> and <~> as '.', '?' and the legacy EVA markers '!' '*' dropped, ',' kept, comments, paragraph marks, text tags, whitespace and wraps removed; glyphs as written"
     },
     "line_type": {
       "type": "string",
@@ -39,8 +98,8 @@
     },
     "position": {
       "type": "string",
-      "enum": ["@", "+", "=", "*"],
-      "description": "Position indicator (new, continue, end, new paragraph)"
+      "enum": ["@", "+", "*", "=", "&", "~", "/", "!"],
+      "description": "IVTFF locator, the locus position relative to the previous item (IVTFF 2.0 Table 8)"
     },
     "quire": {
       "type": ["string", "null"],
@@ -48,7 +107,7 @@
     },
     "section": {
       "type": ["string", "null"],
-      "description": "Manuscript section"
+      "description": "VCAT's one name for the page header's $I illustration type: a renaming of what the source states, the source's layer section_name (data_sources/layers.yaml); the metadata's section by folio ranges is VCAT's judgement"
     },
     "currier_language": {
       "type": ["string", "null"],
@@ -83,11 +142,11 @@
     },
     "has_uncertain": {
       "type": "boolean",
-      "description": "Contains uncertain reading markers (?)"
+      "description": "text holds a '?' (an unreadable character) outside comments, counting only the first reading of an alternate"
     },
     "has_illegible": {
       "type": "boolean",
-      "description": "Contains illegible markers"
+      "description": "text holds a legacy EVA illegibility marker '!' or '*' outside comments; never true for an IVTFF 2.0 EVA file"
     },
     "has_alternatives": {
       "type": "boolean",

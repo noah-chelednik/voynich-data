@@ -1,3 +1,4 @@
+# The suite (tests/test_ci_checks.py) and CI run the same checks.
 # Pre-commit hooks for VCAT
 # Install: pip install pre-commit && pre-commit install
 # Run manually: pre-commit run --all-files

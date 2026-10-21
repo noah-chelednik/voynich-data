@@ -12,6 +12,13 @@ pytest-cov==7.0.0
 ruff==0.14.13
 black==25.12.0
 
+# Building the package (the suite builds a wheel without build isolation; review 494bb9ab finding 3)
+setuptools==80.10.2
+wheel==0.46.3
+
+# The CommonMark parser the card tests read fenced examples with (review f66f47d9 finding 2)
+markdown-it-py==4.2.0
+
 # Type checking
 mypy==1.19.1
 types-requests>=2.31.0

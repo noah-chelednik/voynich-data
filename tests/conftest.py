@@ -101,14 +101,35 @@ def sample_ivtff_labels() -> str:
 <f1r>      <! $Q=A $L=A>
 <f1r.1,@P0;H>       paragraph.text
 <f1r.2,@L0;H>       label.text
-<f1r.3,@C0;H>       circle.text
-<f1r.4,@R0;H>       radius.text
+<f1r.3,@Cc;H>       circle.text
+<f1r.4,@Ri;H>       radius.text
 """
 
 
 # =============================================================================
 # Parsed Data Fixtures
 # =============================================================================
+
+
+def structured_fields(
+    text_raw: str, source_line: int = 1, locus_type: str = "@P0"
+) -> dict[str, Any]:
+    """The raw and structured layer of a hand-built row (item 1.2): ``text_raw`` and the markup
+    fields read from it by the real tokenizer, so hand-built rows stay consistent with it."""
+    from parsers.ivtff_markup import parse_markup
+
+    return {
+        "text_raw": text_raw,
+        "locus_type": locus_type,
+        "source_line": source_line,
+        **parse_markup(text_raw).fields(),
+    }
+
+
+@pytest.fixture
+def structured_layer() -> Any:
+    """``structured_fields`` for tests that build rows by hand."""
+    return structured_fields
 
 
 @pytest.fixture
@@ -137,6 +158,7 @@ def sample_eva_lines() -> list[dict[str, Any]]:
             "has_high_ascii": False,
             "source": "test",
             "source_version": "abc123",
+            **structured_fields("fachys.ykal.ar.ataiin", source_line=1),
         },
         {
             "page_id": "f1r",
@@ -160,6 +182,7 @@ def sample_eva_lines() -> list[dict[str, Any]]:
             "has_high_ascii": False,
             "source": "test",
             "source_version": "abc123",
+            **structured_fields("shory.cthy.daiin", source_line=2),
         },
     ]
 
@@ -287,11 +310,46 @@ def mock_network_error() -> MagicMock:
 
 @pytest.fixture
 def zl_file() -> Path:
-    """Path to ZL transcription file if available."""
-    path = Path(__file__).parent.parent / "data_sources/raw_sources/ZL3b-n.txt"
-    if not path.exists():
-        pytest.skip("ZL transcription file not found")
+    """Path to the cached ZL transcription. A missing source FAILS the test, never skips it."""
+    path = Path(__file__).parent.parent / "data_sources/cache/ZL3b-n.txt"
+    if not path.is_file():
+        pytest.fail(f"ZL transcription not found: {path}")
     return path
+
+
+# A small IVTFF source whose every locus the parser accepts, and the same with one more label locus.
+# Since roadmap item 1.1 the parser accepts that locus too, so the `synthetic_lossy` fixture also makes
+# the parser drop it WITHOUT reporting it, the defect loss accounting exists to catch (synthetic inputs
+# for loss accounting).
+SYNTHETIC_ACCOUNTED = """#=IVTFF Eva- 2.0 M 5
+<f1r>      <! $I=H $Q=A $P=A $L=A $H=1>
+<f1r.1,@P0>       fachys.ykal.ar
+<f1r.2,+P0>       sory.ckhar
+<f1v>      <! $I=H $Q=A $P=B $L=A $H=1>
+<f1v.1,@P0>       kchsy.chadaiin
+"""
+SYNTHETIC_LOSSY = SYNTHETIC_ACCOUNTED + "<f1v.2,&Lz>       otol\n"
+
+
+@pytest.fixture
+def synthetic_accounted() -> str:
+    return SYNTHETIC_ACCOUNTED
+
+
+@pytest.fixture
+def synthetic_lossy(monkeypatch: pytest.MonkeyPatch) -> str:
+    from parsers import IVTFFParser
+
+    original = IVTFFParser._parse_stream
+    dropped = SYNTHETIC_LOSSY.splitlines()[-1].split(">")[0] + ">"
+
+    def silently_dropping(self, lines):  # type: ignore[no-untyped-def]
+        for page in original(self, lines):
+            page.loci = [locus for locus in page.loci if locus.raw_locator != dropped]
+            yield page
+
+    monkeypatch.setattr(IVTFFParser, "_parse_stream", silently_dropping)
+    return SYNTHETIC_LOSSY
 
 
 # =============================================================================
@@ -324,6 +382,7 @@ def valid_transcription_record() -> dict[str, Any]:
         "has_high_ascii": False,
         "source": "zandbergen_landini",
         "source_version": "bf5b6d4a",
+        **structured_fields("fachys.ykal.ar.ataiin", source_line=1),
     }
 
 

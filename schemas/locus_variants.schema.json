@@ -1,0 +1,134 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Voynich locus variants (not a consensus)",
+  "type": "object",
+  "required": [
+    "line_id",
+    "page_id",
+    "line_number",
+    "present_in",
+    "compared",
+    "readings",
+    "distinct_readings",
+    "agreement",
+    "majority_baseline"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "line_id": {
+      "type": "string",
+      "description": "The locus id (`<page>:<locus>`), as in each source's config"
+    },
+    "page_id": {
+      "type": "string",
+      "description": "The page"
+    },
+    "line_number": {
+      "type": "integer",
+      "description": "The locus number on the page"
+    },
+    "present_in": {
+      "type": "array",
+      "description": "Every source holding the locus, in any alphabet, in source order",
+      "items": {
+        "type": "string"
+      }
+    },
+    "compared": {
+      "type": "array",
+      "description": "The readers compared: the EVA sources holding it, one per transcriber where a file has several",
+      "items": {
+        "type": "string"
+      }
+    },
+    "readings": {
+      "type": "array",
+      "description": "Each compared reader's reading: reader, source, transcriber, locus type, source line, words",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "reader",
+          "source",
+          "transcriber",
+          "locus_type",
+          "source_line",
+          "words"
+        ],
+        "properties": {
+          "reader": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "transcriber": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "locus_type": {
+            "type": "string"
+          },
+          "source_line": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "words": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    },
+    "distinct_readings": {
+      "type": "integer",
+      "description": "How many different word sequences the readers give",
+      "minimum": 0
+    },
+    "agreement": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "description": "The share of pairs of readers giving the same words; null for fewer than two",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "majority_baseline": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "A labelled baseline, never the default and not a reading: the words more readers give than any other, with their support and readers; null on a tie",
+      "additionalProperties": false,
+      "required": [
+        "words",
+        "support",
+        "readers"
+      ],
+      "properties": {
+        "words": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "support": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "readers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

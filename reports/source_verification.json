@@ -1,81 +1,82 @@
 {
-  "lsi": {
-    "source_name": "Landini-Stolfi Interlinear (LSI)",
-    "url": "http://www.voynich.nu/data/beta/LSI_ivtff_0d.txt",
-    "accessible": false,
-    "status_code": 404,
-    "content_type": "text/html; charset=iso-8859-1",
-    "sample_hash": null,
-    "sample_size": null,
-    "can_parse_pages": null,
-    "can_parse_lines": null,
-    "page_count": null,
-    "line_count": null,
-    "errors": [
-      "HTTP 404 - not accessible"
-    ],
-    "warnings": [],
-    "notes": [],
-    "is_success": false
-  },
-  "voynich_nu": {
-    "source_name": "voynich.nu",
-    "url": "https://www.voynich.nu/transcr.html",
-    "accessible": true,
-    "status_code": 200,
-    "content_type": "text/html",
-    "sample_hash": "57f8aaf6b1cdd6a292361b3a94e723f8fb14f0960b2cb349acee142fbadb19a5",
-    "sample_size": 60410,
-    "can_parse_pages": null,
-    "can_parse_lines": null,
-    "page_count": null,
-    "line_count": null,
+  "ZL": {
+    "file": "data_sources/cache/ZL3b-n.txt",
+    "url": "https://www.voynich.nu/data/ZL3b-n.txt",
+    "sha256": "bf5b6d4ac1e3a51b1847a9c388318d609020441ccd56984c901c32b09beccafc",
+    "upstream_version": "Version 3b of 13/05/2025",
     "errors": [],
-    "warnings": [],
-    "notes": [
-      "Content appears to be Voynich-related",
-      "Transcription/transliteration content found"
-    ],
     "is_success": true
   },
-  "stolfi": {
-    "source_name": "Stolfi UNICAMP",
-    "url": "https://www.ic.unicamp.br/~stolfi/voynich/",
-    "accessible": true,
-    "status_code": 200,
-    "content_type": "text/html;charset=ISO-8859-1",
-    "sample_hash": "ab848433749ee99fea913e8115b37ba4e26c4d0c1ecde8333ac0d8179fdee69a",
-    "sample_size": 9602,
-    "can_parse_pages": null,
-    "can_parse_lines": null,
-    "page_count": null,
-    "line_count": null,
+  "IT": {
+    "file": "data_sources/cache/IT_ivtff_1a.txt",
+    "url": "https://www.voynich.nu/data/previous/IT_ivtff_1a.txt",
+    "sha256": "db624a731114f26854bbfe3a59d40827fa8911be46d086b6c558d99e557241ee",
+    "upstream_version": "Version 1a of 27/12/2022",
     "errors": [],
-    "warnings": [],
-    "notes": [],
     "is_success": true
   },
-  "zl": {
-    "source_name": "Zandbergen-Landini (ZL)",
-    "url": "http://www.voynich.nu/data/ivtff/ZL3a-n.txt",
-    "accessible": false,
-    "status_code": 404,
-    "content_type": "text/html; charset=iso-8859-1",
-    "sample_hash": null,
-    "sample_size": null,
-    "can_parse_pages": null,
-    "can_parse_lines": null,
-    "page_count": null,
-    "line_count": null,
-    "errors": [
-      "HTTP 404 - not accessible"
-    ],
-    "warnings": [],
-    "notes": [],
-    "is_success": false
+  "IT2a": {
+    "file": "data_sources/cache/IT2a-n.txt",
+    "url": "https://www.voynich.nu/data/IT2a-n.txt",
+    "sha256": "7f27a8b0feed8f6de0a99900df6bf912dd1d295c38e5f830bac8b41c3f536fb5",
+    "upstream_version": "Version 2a of 02/02/2023 modified 25/06/2025",
+    "errors": [],
+    "is_success": true
+  },
+  "CD": {
+    "file": "data_sources/cache/CD2a-n.txt",
+    "url": "https://www.voynich.nu/data/CD2a-n.txt",
+    "sha256": "edc18e6de699c50d575925d4f469685ccbbe22c9755b9b8a3b002f83253cbde5",
+    "upstream_version": "IVTFF version 2a of 02/02/2023",
+    "errors": [],
+    "is_success": true
+  },
+  "FG": {
+    "file": "data_sources/cache/FG2a-n.txt",
+    "url": "https://www.voynich.nu/data/FG2a-n.txt",
+    "sha256": "a1460a05ff610a406e62b4095a8f8e88c04653c1ef4aa5ad6428ddb1ac01fe06",
+    "upstream_version": "IVTFF version 2a of 02/02/2023",
+    "errors": [],
+    "is_success": true
+  },
+  "GC": {
+    "file": "data_sources/cache/GC2a-n.txt",
+    "url": "https://www.voynich.nu/data/GC2a-n.txt",
+    "sha256": "b09570cb6c993bc2d87134d115e60a978650a8a6495483ddbb1f6005a586096f",
+    "upstream_version": "IVTFF version 2a of 05/02/2023 modified 25/06/2025",
+    "errors": [],
+    "is_success": true
+  },
+  "RF1b": {
+    "file": "data_sources/cache/RF1b-e.txt",
+    "url": "https://www.voynich.nu/data/RF1b-e.txt",
+    "sha256": "e7d3238e35743e06c63367a933909ec37b1e2de7ada3a1b449447eafa1918782",
+    "upstream_version": "v. 1b",
+    "errors": [],
+    "is_success": true
+  },
+  "VT": {
+    "file": "data_sources/cache/VT0e-n.txt",
+    "url": "https://www.voynich.nu/data/VT0e-n.txt",
+    "sha256": "e13ba5e073cae54722bc095db8eb9a1aa9c7105f45a70f66a0aad236077f2426",
+    "upstream_version": "v. 0e",
+    "errors": [],
+    "is_success": true
+  },
+  "LSI": {
+    "file": "data_sources/cache/latin-1/LSI_ivtff_0d.txt",
+    "url": "https://www.voynich.nu/data/beta/LSI_ivtff_0d.txt",
+    "sha256": "3f3f2af18cde10efe75c582f49b07b651c3397022fcbfa5854fecc424c121afa",
+    "upstream_version": "Release 1.6e6 - ?? Dec 1998",
+    "errors": [],
+    "is_success": true
   },
   "_metadata": {
-    "verification_date": "2026-01-17T04:49:50.119271",
-    "all_pass": false
+    "verification_date": "2026-10-19T07:55:24.858866+00:00",
+    "mode": "cache",
+    "unlisted_cache_files": [],
+    "checksums_without_record": [],
+    "checksum_file_error": null,
+    "all_pass": true
   }
 }

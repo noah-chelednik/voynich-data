@@ -1,0 +1,140 @@
+# Published reference values (roadmap item 2.10): the acceptance tests of tests/test_reference_checks.py compare VCAT's
+# statistics (vcat/reference.py) with these. Each value is quoted from a page of voynich.nu (the upstream site the roadmap
+# names), fetched on the date given and pinned by the SHA-256 of its bytes; the pages are kept offline under
+# docs/reference/ (git-ignored: their redistribution rights are not established), and `python scripts/check_references.py`
+# checks each pin and each quote against them (or, with --fetch, against the site). A value is a citation, not an
+# expected count of VCAT's own output: the test states how far VCAT may differ and why (`tolerance`, `why`).
+
+pages:
+  - id: zandbergen-entropy
+    url: https://www.voynich.nu/extra/sol_ent.html
+    title: "Voynich MS - what we learn from entropy"
+    author: René Zandbergen
+    updated: "10/12/2024"
+    retrieved: "2026-10-21"
+    sha256: f4d19d8415917c02d18add71aed409d04f3c19da51f409bb2ce4f3d599d033a5
+    file: docs/reference/voynich.nu_extra_sol_ent.html
+    method: "In these figures, spaces have not been counted as characters."
+  - id: zandbergen-words
+    url: https://www.voynich.nu/a4_word.html
+    title: "Voynich MS - Analysis - Words"
+    author: René Zandbergen
+    updated: "24/05/2025"
+    retrieved: "2026-10-21"
+    sha256: 66741a7d13cb3c5718236adaa215341a5fdb71bc407421d3ea3de57506069999
+    file: docs/reference/voynich.nu_a4_word.html
+    method: "Reddy and Knight report that the Voynich MS text contains 37,919 word tokens and 8114 word types"
+
+# A tolerance is relative (a fraction of the published value) for counts and absolute (bits) for entropies. `control`
+# names the kinds of damage the check is shown to fail on (tests/test_reference_checks.py, DAMAGES).
+references:
+  - id: zl-characters
+    page: zandbergen-entropy
+    where: "Table 1, row 'Voynich MS ZL transcr. (Eva)', column 'Nr. of chars.'"
+    quote: "Voynich MS ZL transcr. (Eva) 188,862 3.862 3.206 2.541"
+    source: ZL
+    measure: characters
+    value: 188862
+    tolerance: {relative: 0.05}
+    control: [loci-lost, paragraphs-only]
+    why: "The published count is of the ZL file of its date (the page was updated 10/12/2024; VCAT caches ZL 3b of 13/05/2025), under counting choices the page does not state (ligatures and rare glyphs among them). Fails on: a tenth of the loci lost, paragraph text only."
+  - id: zl-h1
+    page: zandbergen-entropy
+    where: "Table 1, row 'Voynich MS ZL transcr. (Eva)', column 'Character entropy'"
+    quote: "Voynich MS ZL transcr. (Eva) 188,862 3.862 3.206 2.541"
+    source: ZL
+    measure: h1
+    value: 3.862
+    tolerance: {absolute: 0.03}
+    control: [markup-kept, uncertain-kept]
+    why: "The four Voynich transliterations of the page's Table 1 differ among themselves by 0.043 bits (3.829 to 3.872); a version and rule difference within one transliteration is smaller. Fails on: markup left in, uncertain readings kept."
+  - id: zl-h2
+    page: zandbergen-entropy
+    where: "Table 2, row 'Voynich MS ZL transcr (Eva)', conditional character entropy"
+    quote: "ZL transcr (Eva) 3.862 1.836"
+    source: ZL
+    measure: h2
+    value: 1.836
+    tolerance: {absolute: 0.05}
+    control: [uncertain-kept, word-division-lost]
+    why: "Pair statistics depend more than single ones on where the words are divided (the page counts pairs within words only, as VCAT does) and on the transliteration's version. Fails on: uncertain readings kept, word division lost."
+  - id: fg-characters
+    page: zandbergen-entropy
+    where: "Table 1, row 'Voynich MS FSG transcr.', column 'Nr. of chars.'"
+    quote: "Voynich MS FSG transcr. 142,770 3.829 3.382 2.557"
+    source: FG
+    measure: characters
+    value: 142770
+    tolerance: {relative: 0.05}
+    control: [loci-lost]
+    why: "As for ZL: the page's counting rules are not stated, nor which FSG file it read; VCAT caches FG IVTFF 2a of 02/02/2023. Fails on: a tenth of the loci lost."
+  - id: fg-h1
+    page: zandbergen-entropy
+    where: "Table 1, row 'Voynich MS FSG transcr.', column 'Character entropy'"
+    quote: "Voynich MS FSG transcr. 142,770 3.829 3.382 2.557"
+    source: FG
+    measure: h1
+    value: 3.829
+    tolerance: {absolute: 0.03}
+    control: [markup-kept]
+    why: "As for ZL's h1. Fails on: markup left in."
+  - id: fg-h2
+    page: zandbergen-entropy
+    where: "Table 2, row 'Voynich MS FSG transcr', conditional character entropy"
+    quote: "FSG transcr 3.829 2.052"
+    source: FG
+    measure: h2
+    value: 2.052
+    tolerance: {absolute: 0.05}
+    control: [word-division-lost]
+    why: "As for ZL's h2. Fails on: word division lost."
+  - id: cd-characters
+    page: zandbergen-entropy
+    where: "Table 1, row 'Voynich MS (part) C-D transcr.', column 'Nr. of chars.'"
+    quote: "Voynich MS (part) C-D transcr. 66,587 3.857 3.437 2.689"
+    source: CD
+    measure: characters
+    value: 66587
+    tolerance: {relative: 0.05}
+    control: [loci-lost]
+    why: "As for ZL: the page's counting rules are not stated; the C-D file covers part of the manuscript. Fails on: a tenth of the loci lost."
+  - id: cd-h1
+    page: zandbergen-entropy
+    where: "Table 1, row 'Voynich MS (part) C-D transcr.', column 'Character entropy'"
+    quote: "Voynich MS (part) C-D transcr. 66,587 3.857 3.437 2.689"
+    source: CD
+    measure: h1
+    value: 3.857
+    tolerance: {absolute: 0.03}
+    control: [markup-kept, uncertain-kept]
+    why: "As for ZL's h1. Fails on: markup left in, uncertain readings kept."
+  - id: cd-h2
+    page: zandbergen-entropy
+    where: "Table 2, row 'Voynich MS (part) C-D transcr', conditional character entropy"
+    quote: "C-D transcr 3.857 2.085"
+    source: CD
+    measure: h2
+    value: 2.085
+    tolerance: {absolute: 0.05}
+    control: [word-division-lost]
+    why: "As for ZL's h2. Fails on: word division lost."
+  - id: zl-word-tokens
+    page: zandbergen-words
+    where: "Section 4.1, citing Reddy and Knight, with note 2 (the file 'voynich.now', Currier alphabet)"
+    quote: "Reddy and Knight report that the Voynich MS text contains 37,919 word tokens and 8114 word types"
+    source: ZL
+    measure: tokens
+    value: 37919
+    tolerance: {relative: 0.05}
+    control: [loci-lost, paragraphs-only, word-division-lost]
+    why: "A different transliteration (the older file 'voynich.now' in the Currier alphabet) with its own word division and coverage, compared with ZL's words under analysis-v1 (uncertain spaces are word boundaries). Fails on: a tenth of the loci lost, paragraph text only, word division lost."
+  - id: zl-word-types
+    page: zandbergen-words
+    where: "Section 4.1, citing Reddy and Knight, with note 2 (the file 'voynich.now', Currier alphabet)"
+    quote: "Reddy and Knight report that the Voynich MS text contains 37,919 word tokens and 8114 word types"
+    source: ZL
+    measure: types
+    value: 8114
+    tolerance: {relative: 0.10}
+    control: [markup-kept, word-division-lost]
+    why: "Distinct words depend on the alphabet as well as on word division: one Currier character can stand for an EVA glyph sequence and the reverse, so two transliterations of one text differ in types more than in tokens. Fails on: markup left in, word division lost."

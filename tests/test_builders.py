@@ -25,13 +25,14 @@ from builders.build_eva_lines import (
     locus_type_to_line_type,
     run_smoke_test,
 )
-from parsers import Page, PageVariables
+from parsers import IVTFFParser, Page, PageVariables
+from vcat.loss_accounting import census_source
 
 
 class TestLineRecord:
     """Tests for LineRecord dataclass."""
 
-    def test_line_record_creation(self):
+    def test_line_record_creation(self, structured_layer):
         """Test creating a LineRecord."""
         record = LineRecord(
             page_id="f1r",
@@ -55,6 +56,7 @@ class TestLineRecord:
             has_high_ascii=False,
             source="test",
             source_version="abc123",
+            **structured_layer("fachys.ykal"),
         )
 
         assert record.page_id == "f1r"
@@ -63,7 +65,7 @@ class TestLineRecord:
         assert record.line_id == "f1r:1"
         assert record.char_count == 10
 
-    def test_line_record_to_dict(self):
+    def test_line_record_to_dict(self, structured_layer):
         """Test LineRecord to_dict method."""
         record = LineRecord(
             page_id="f1r",
@@ -87,6 +89,7 @@ class TestLineRecord:
             has_high_ascii=False,
             source="test",
             source_version="abc",
+            **structured_layer("test"),
         )
 
         d = record.to_dict()
@@ -117,15 +120,16 @@ class TestBuildReport:
 
     def test_build_report_page_count_alias(self):
         """Test page_count property alias."""
+        pages = 3
         report = BuildReport(
             source_file="test",
             source_hash="abc",
             build_date="2026-01-17",
             format_version="Eva-",
-            total_pages=226,
+            total_pages=pages,
         )
 
-        assert report.page_count == 226
+        assert report.page_count == pages
 
     def test_build_report_to_dict(self):
         """Test BuildReport to_dict method."""
@@ -436,9 +440,9 @@ class TestRunSmokeTest:
 
     def test_smoke_test_passes_valid_data(self, sample_eva_lines: list[dict], capsys):
         """Test that smoke test passes with valid data."""
-        # Create enough records to pass the minimum count with proper variety
+        # Records with variety (both languages, two line types) across several pages
         records = []
-        for i in range(4100):
+        for i in range(60):
             rec = sample_eva_lines[0].copy()
             rec["line_id"] = f"f{i // 20}r:{i % 20 + 1}"
             rec["page_id"] = f"f{i // 20}r"
@@ -454,8 +458,9 @@ class TestRunSmokeTest:
             source_hash="abc123",
             build_date="2026-01-17",
             format_version="Eva-",
-            total_pages=226,
-            total_lines=4100,
+            total_pages=len({r.page_id for r in records}),
+            pages_with_lines=len({r.page_id for r in records}),
+            total_lines=len(records),
         )
 
         result = run_smoke_test(records, report)
@@ -463,8 +468,8 @@ class TestRunSmokeTest:
         # Should pass
         assert result is True
 
-    def test_smoke_test_fails_low_count(self, sample_eva_lines: list[dict], capsys):
-        """Test that smoke test fails with too few records."""
+    def test_smoke_test_fails_count_mismatch(self, sample_eva_lines: list[dict], capsys):
+        """Test that smoke test fails when the records disagree with the report's total."""
         records = [LineRecord(**dict(rec.items())) for rec in sample_eva_lines]
 
         report = BuildReport(
@@ -473,12 +478,13 @@ class TestRunSmokeTest:
             build_date="2026-01-17",
             format_version="Eva-",
             total_pages=1,
-            total_lines=len(records),
+            pages_with_lines=len({r.page_id for r in records}),
+            total_lines=len(records) + 1,
         )
 
         result = run_smoke_test(records, report)
 
-        # Should fail due to low record count
+        # Should fail: one record fewer than the report says was built
         assert result is False
 
 
@@ -486,12 +492,18 @@ class TestIntegrationWithRealFile:
     """Integration tests using real ZL file if available."""
 
     def test_build_from_zl_file(self, zl_file: Path, tmp_output_dir: Path):
-        """Test building from actual ZL file."""
+        """Test building from actual ZL file; expectations come from the source census."""
         records, report = build_eva_lines(zl_file, tmp_output_dir)
+        census = census_source(zl_file)
+        pages = list(IVTFFParser().parse_file(zl_file))
 
-        assert len(records) > 4000
-        assert report.total_pages > 200
-        assert report.total_lines > 4000
+        assert records
+        assert len(records) == report.total_lines == report.loci_emitted
+        assert {r.line_id for r in records} <= set(census.loci)
+        assert len(records) + len(report.unaccounted_loci) == len(census.loci)
+        assert report.total_pages == len(pages)
+        assert {p.page_id for p in pages} <= set(census.pages)
+        assert report.pages_with_lines == len({r.page_id for r in records})
 
     def test_smoke_test_passes_on_real_data(self, zl_file: Path, tmp_output_dir: Path):
         """Test smoke test passes on real data."""

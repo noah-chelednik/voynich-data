@@ -1,0 +1,11 @@
+{
+  "lines": 5385,
+  "lines_file": "eva_lines.jsonl",
+  "lines_sha256": "ac1eea16a36449a716da16111bc6a0ff9150866720c6472008f1111385687b5a",
+  "lines_without_words": 0,
+  "paragraphs": 740,
+  "tokenizer": "vcat/words.py",
+  "total_words": 39018,
+  "uncertain_spaces": 2748,
+  "words_in_paragraphs": 35056
+}

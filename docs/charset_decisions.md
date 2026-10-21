@@ -1,5 +1,12 @@
 # Charset Decisions
 
+> **Superseded.** This document records the charset policy of releases 0.2.1 to 0.2.3. The current contract is the
+> faithfulness contract of `docs/data_model.md`: `text_raw` keeps the source text exactly, and `text_clean` is the named
+> profile `analysis-v1` (`vcat/profiles.py`), which keeps every glyph the source writes, uppercase `I` included (row
+> `f57v:3`). The covenant below bound the 0.2.x releases; the build in this repository is not a 0.2.x release (it is
+> release 1.0.0, `docs/ROADMAP.md` item 1.10), and
+> the release manifest names `docs/data_model.md` as its contract. Kept as history.
+
 This document records the decisions made when defining ALLOWED_TEXT_CLEAN_CHARSET.
 
 ## Covenant

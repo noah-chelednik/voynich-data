@@ -1,150 +1,247 @@
-# VCAT Data Sources Configuration
-# ================================
-# This file documents all primary data sources for the VCAT project.
-# Each source should be verified before implementation.
+# The sources VCAT builds from (roadmap items 1.9 and 2.3).
+#
+# `cached` lists every file in data_sources/cache/, one record each. The suite checks this file against the cache
+# (tests/test_sources.py): every cached file has a record and every record a file; each `sha256` is the file's; each
+# `upstream_version` is the file's own version (below); `data_sources/checksums_all.txt` agrees.
+# `vcat-verify` (data_sources/verify_sources.py) checks the same and writes reports/source_verification.json.
+# Every file was fetched from its `url` on 2026-10-17 (S12) and had the pinned SHA-256 there.
+#
+# Fields:
+#   url               where the file is published upstream
+#   url_fetched       true: scripts/fetch_sources.py downloads it from `url` when it is missing and checks this hash
+#   upstream_version  the file's version: its header's version line, verbatim; or, when the header carries none
+#                     (`version_from: listing`), the version voynich.nu's table of transliteration files gives for it,
+#                     which its file name also carries
+#   listed_at         the voynich.nu table that links the file: one of the tables `license_statement` covers
+#   license           the license the upstream states for the file, an SPDX id
+#   license_basis     where that statement comes from
+#   license_verified  true once the statement has been read at its source and quoted in docs/SOURCES_LICENSE.md (S12)
+#   redistributed     true: the file itself is committed in this repository (data_sources/cache/)
 
-sources:
-  # Primary EVA Transcription Sources
-  landini_stolfi_interlinear:
-    name: "Landini-Stolfi Interlinear File (LSI)"
-    description: |
-      The de facto standard interlinear transcription file combining multiple
-      historical transcriptions in EVA encoding. Includes Takahashi's complete
-      transcription (1999 version), Currier, FSG, and others.
-    primary_url: "http://www.voynich.nu/data/beta/LSI_ivtff_0d.txt"
-    alternative_urls:
-      - "https://www.ic.unicamp.br/~stolfi/voynich/98-12-28/interln16e6.evt"
-    format: "IVTFF (Intermediate Voynich Transliteration File Format)"
-    content_type: "text/plain"
-    includes_transcribers:
-      - code: "H"
-        name: "Takeshi Takahashi"
-        description: "First complete transcription, uses full EVA including weirdos"
-      - code: "C"
-        name: "Prescott Currier"
-        description: "Historical transcription, converted to EVA"
-      - code: "F"
-        name: "First Study Group (Friedman)"
-        description: "1940s punchcard transcription, converted to EVA"
-      - code: "L"
-        name: "Don Latham"
-        description: "Partial transcription"
-      - code: "R"
-        name: "Mike Roe"
-        description: "Partial transcription"
-    status: "verified_accessible"
-    notes: |
-      This is currently the best single source for getting started.
-      Contains multiple transcriptions aligned interlinearly.
+# The upstream's license statement, read at its source on 2026-10-17 (S12), and the tables of files it covers. It is
+# quoted verbatim in docs/SOURCES_LICENSE.md (the three "here" are the links to the tables below).
+license_statement:
+  url: https://www.voynich.nu/roadmap.html
+  section: Licences and copyright
+  read: "2026-10-17"
+  quote: >-
+    "The transliterations of the Voynich MS text, as collected in tables here, here and here, have been collected from different sources and have always been in the public domain. More specifically, they are being made available at this web site in accordance with the Creative Commons CC0 licence"
+  tables:
+    - https://www.voynich.nu/transcr.html#links
+    - https://www.voynich.nu/extra/legacy.html
+    - https://www.voynich.nu/extra/sta.html#stalinks
 
-  zandbergen_ivtff:
-    name: "Zandbergen-Landini (ZL) Transcription"
-    description: |
-      Complete and most accurate EVA transcription by René Zandbergen,
-      available in modern IVTFF 2.0 format.
-    primary_url: "http://www.voynich.nu/data/ivtff/ZL3a-n.txt"
-    format: "IVTFF 2.0"
-    content_type: "text/plain"
-    status: "to_verify"
-    notes: |
-      The ZL transcription is considered the most accurate complete transcription.
-      Uses extended EVA including rare characters.
+cached:
+  - id: ZL
+    file: data_sources/cache/ZL3b-n.txt
+    name: Zandbergen-Landini transliteration (ZL), EVA
+    authors: [René Zandbergen, Gabriel Landini]
+    alphabet: EVA
+    url: https://www.voynich.nu/data/ZL3b-n.txt
+    url_fetched: true
+    sha256: bf5b6d4ac1e3a51b1847a9c388318d609020441ccd56984c901c32b09beccafc
+    upstream_version: "Version 3b of 13/05/2025"
+    listed_at: https://www.voynich.nu/transcr.html#links
+    used_by: [voynich-eva, voynich-manuscript-metadata, voynich-transcription-mismatch, voynich-transliterations]
+    license: CC0-1.0
+    license_basis: >-
+      voynich.nu's statement (license_statement): the transliterations collected in its tables are made available under CC0; this file is linked from https://www.voynich.nu/transcr.html#links
+    license_verified: true
+    redistributed: true
 
-  takahashi_website:
-    name: "Takeshi Takahashi's Website"
-    description: |
-      The original Takahashi transcription in HTML format.
-      Represents the author's current version (may differ from LSI version).
-    primary_url: "http://voynich.freie-literatur.de/index.php?show=extractor"
-    alternative_urls:
-      - "http://www3.justnet.ne.jp/~ttakahashike/voynich/pages/index.htm"  # Historical, may be dead
-    format: "HTML with EVA transcription"
-    content_type: "text/html"
-    status: "to_verify"
-    notes: |
-      The freie-literatur.de version provides an extractor tool.
-      HTML format requires parsing to extract clean text.
+  - id: IT
+    file: data_sources/cache/IT_ivtff_1a.txt
+    name: Takahashi transliteration (IT), EVA, extracted from the Landini-Stolfi interlinear file
+    authors: [Takeshi Takahashi]
+    alphabet: EVA
+    url: https://www.voynich.nu/data/previous/IT_ivtff_1a.txt
+    url_fetched: true
+    sha256: db624a731114f26854bbfe3a59d40827fa8911be46d086b6c558d99e557241ee
+    upstream_version: "Version 1a of 27/12/2022"
+    listed_at: https://www.voynich.nu/extra/legacy.html
+    used_by: [voynich-eva, voynich-transcription-mismatch, voynich-transliterations]  # IT version 1a, the previous one; version 2a is the record IT2a
+    license: CC0-1.0
+    license_basis: >-
+      voynich.nu's statement (license_statement): the transliterations collected in its tables are made available under CC0; this file is linked from https://www.voynich.nu/extra/legacy.html
+    license_verified: true
+    redistributed: true
 
-  stolfi_concordance:
-    name: "Stolfi's Concordance and Analysis Files"
-    description: |
-      Jorge Stolfi's comprehensive collection of Voynich analysis files
-      including concordances, word lists, and interlinear transcriptions.
-    primary_url: "https://www.ic.unicamp.br/~stolfi/voynich/"
-    key_files:
-      - path: "98-12-28-interln16e6/"
-        description: "Interlinear file version 1.6e6"
-      - path: "99-01-16-concordance/"
-        description: "Complete word concordance"
-      - path: "00-12-21-word-length-distr/"
-        description: "Word length distribution analysis"
-    format: "Mixed (text, HTML)"
-    status: "to_verify"
-    notes: |
-      Extensive historical resource. Files may use older EVA conventions.
+  - id: IT2a
+    file: data_sources/cache/IT2a-n.txt
+    name: Takahashi transliteration (IT), EVA, version 2a, extracted from the Landini-Stolfi interlinear file
+    authors: [Takeshi Takahashi]
+    alphabet: EVA
+    url: https://www.voynich.nu/data/IT2a-n.txt
+    url_fetched: true
+    sha256: 7f27a8b0feed8f6de0a99900df6bf912dd1d295c38e5f830bac8b41c3f536fb5
+    upstream_version: "Version 2a of 02/02/2023 modified 25/06/2025"
+    listed_at: https://www.voynich.nu/transcr.html#links
+    used_by: [voynich-eva, voynich-transliterations]  # the current IT (the transliterations dataset; the mismatch index uses 1a)
+    license: CC0-1.0
+    license_basis: >-
+      voynich.nu's statement (license_statement): the transliterations collected in its tables are made available under CC0; this file is linked from https://www.voynich.nu/transcr.html#links
+    license_verified: true
+    redistributed: true
 
-  # Metadata Sources
-  voynich_nu:
-    name: "voynich.nu (René Zandbergen)"
-    description: |
-      The most comprehensive online resource for Voynich Manuscript research.
-      Contains metadata, section classifications, quire structure, and image links.
-    primary_url: "https://www.voynich.nu/"
-    key_pages:
-      - path: "transcr.html"
-        description: "Transliteration overview and file links"
-      - path: "folios.html"
-        description: "Folio-by-folio information"
-      - path: "quire.html"
-        description: "Quire structure"
-      - path: "extra/sp_transcr.html"
-        description: "Special topics on transliteration"
-    status: "verified_accessible"
-    notes: |
-      Primary source for manuscript structure metadata.
-      Maintained by René Zandbergen, leading Voynich researcher.
+  - id: CD
+    file: data_sources/cache/CD2a-n.txt
+    name: Currier transliteration (CD), Currier alphabet
+    authors: [Prescott Currier, Mary D'Imperio]
+    alphabet: Currier
+    url: https://www.voynich.nu/data/CD2a-n.txt
+    url_fetched: true
+    sha256: edc18e6de699c50d575925d4f469685ccbbe22c9755b9b8a3b002f83253cbde5
+    upstream_version: "IVTFF version 2a of 02/02/2023"
+    listed_at: https://www.voynich.nu/transcr.html#links
+    used_by: [voynich-eva, voynich-transcription-mismatch, voynich-transliterations]  # presence of its loci only (sources_present)
+    license: CC0-1.0
+    license_basis: >-
+      voynich.nu's statement (license_statement): the transliterations collected in its tables are made available under CC0; this file is linked from https://www.voynich.nu/transcr.html#links
+    license_verified: true
+    redistributed: true
 
-  beinecke_library:
-    name: "Yale Beinecke Rare Book & Manuscript Library"
-    description: |
-      Official repository of the Voynich Manuscript (MS 408).
-      Provides high-resolution scans.
-    primary_url: "https://brbl-dl.library.yale.edu/vufind/Record/3519597"
-    iiif_manifest: "https://collections.library.yale.edu/manifests/oid/2002046"
-    status: "to_verify"
-    notes: |
-      Official source for images. IIIF manifest provides programmatic access.
+  - id: FG
+    file: data_sources/cache/FG2a-n.txt
+    name: First Study Group transliteration (FG), FSG alphabet
+    authors: [First Study Group (William Friedman)]
+    alphabet: FSG
+    url: https://www.voynich.nu/data/FG2a-n.txt
+    url_fetched: true
+    sha256: a1460a05ff610a406e62b4095a8f8e88c04653c1ef4aa5ad6428ddb1ac01fe06
+    upstream_version: "IVTFF version 2a of 02/02/2023"
+    listed_at: https://www.voynich.nu/transcr.html#links
+    used_by: [voynich-eva, voynich-transcription-mismatch, voynich-transliterations]  # presence of its loci only (sources_present)
+    license: CC0-1.0
+    license_basis: >-
+      voynich.nu's statement (license_statement): the transliterations collected in its tables are made available under CC0; this file is linked from https://www.voynich.nu/transcr.html#links
+    license_verified: true
+    redistributed: true
 
-  # Additional Transcription Sources (for mismatch analysis)
-  glen_claston_v101:
-    name: "Glen Claston v101 Transcription"
-    description: |
-      Alternative complete transcription using a glyph-based alphabet.
-      More detailed than EVA in capturing visual differences.
-    primary_url: "http://www.voynich.nu/data/ivtff/GC_ivtff_1b.txt"
-    format: "IVTFF (v101 alphabet)"
-    status: "to_verify"
-    notes: |
-      Useful for comparison. v101 alphabet captures more visual detail than EVA.
+  - id: GC
+    file: data_sources/cache/GC2a-n.txt
+    name: Glen Claston transliteration (GC), v101 alphabet
+    authors: [Glen Claston (Tim Rayhel)]
+    alphabet: v101
+    url: https://www.voynich.nu/data/GC2a-n.txt
+    url_fetched: true
+    sha256: b09570cb6c993bc2d87134d115e60a978650a8a6495483ddbb1f6005a586096f
+    upstream_version: "IVTFF version 2a of 05/02/2023 modified 25/06/2025"
+    listed_at: https://www.voynich.nu/transcr.html#links
+    used_by: [voynich-eva, voynich-transcription-mismatch, voynich-transliterations]  # presence of its loci only (sources_present)
+    license: CC0-1.0
+    license_basis: >-
+      voynich.nu's statement (license_statement): the transliterations collected in its tables are made available under CC0; this file is linked from https://www.voynich.nu/transcr.html#links
+    license_verified: true
+    redistributed: true
 
-# Verification checklist for each source:
-# [ ] URL accessible (HTTP 200)
-# [ ] Content type matches expected
-# [ ] Can identify page boundaries
-# [ ] Can identify line numbers
-# [ ] Character set documented
-# [ ] No authentication required
-# [ ] Downloaded with hash stored
+  - id: RF1b
+    file: data_sources/cache/RF1b-e.txt
+    name: Reference transliteration (RF1b), EVA, full form
+    authors: [René Zandbergen]
+    alphabet: EVA
+    url: https://www.voynich.nu/data/RF1b-e.txt
+    url_fetched: true
+    sha256: e7d3238e35743e06c63367a933909ec37b1e2de7ada3a1b449447eafa1918782
+    upstream_version: "v. 1b"
+    version_from: listing
+    listed_at: https://www.voynich.nu/transcr.html#links
+    used_by: [voynich-eva, voynich-transliterations]  # combined from GC and ZL upstream
+    license: CC0-1.0
+    license_basis: >-
+      voynich.nu's statement (license_statement): the transliterations collected in its tables are made available under CC0; this file is linked from https://www.voynich.nu/transcr.html#links
+    license_verified: true
+    redistributed: true
 
-verification_protocol:
-  steps:
-    - name: "accessibility"
-      description: "Verify URL returns HTTP 200"
-    - name: "content_type"
-      description: "Verify response content type matches expected"
-    - name: "sample_download"
-      description: "Download sample and compute SHA256 hash"
-    - name: "format_check"
-      description: "Verify file format matches documentation"
-    - name: "structure_check"
-      description: "Verify page and line boundaries can be identified"
+  - id: VT
+    file: data_sources/cache/VT0e-n.txt
+    name: voynichese.com transliteration (VT), EVA, mainly by Takeshi Takahashi
+    authors: [Takeshi Takahashi]
+    alphabet: EVA
+    url: https://www.voynich.nu/data/VT0e-n.txt
+    url_fetched: true
+    sha256: e13ba5e073cae54722bc095db8eb9a1aa9c7105f45a70f66a0aad236077f2426
+    upstream_version: "v. 0e"
+    version_from: listing
+    listed_at: https://www.voynich.nu/transcr.html#links
+    used_by: [voynich-eva, voynich-transliterations]
+    license: CC0-1.0
+    license_basis: >-
+      voynich.nu's statement (license_statement): the transliterations collected in its tables are made available under CC0; this file is linked from https://www.voynich.nu/transcr.html#links
+    license_verified: true
+    redistributed: true
+
+  - id: LSI
+    file: data_sources/cache/latin-1/LSI_ivtff_0d.txt  # not in the format's ASCII: kept apart, its encoding named
+    name: Landini-Stolfi interlinear file (LSI), EVA, several transliterations per locus
+    authors: [Gabriel Landini, Jorge Stolfi, and the transcribers it collects]
+    alphabet: EVA
+    url: https://www.voynich.nu/data/beta/LSI_ivtff_0d.txt
+    url_fetched: true
+    sha256: 3f3f2af18cde10efe75c582f49b07b651c3397022fcbfa5854fecc424c121afa
+    upstream_version: "Release 1.6e6 - ?? Dec 1998"  # Stolfi's release line; voynich.nu's conversion is 0d, its file name
+    encoding: latin-1  # its 13 lines with bytes above 127 are Latin-1, none UTF-8 (measured at S13, DECISIONS Q63)
+    listed_at: https://www.voynich.nu/transcr.html#links
+    # Lines that break IVTFF itself, reported by the parser (never emitted, never dropped silently) under the ids
+    # given; the suite requires the parser's rejections to be exactly these (S13, DECISIONS Q63)
+    nonconforming:
+      - {line: 37278, id: "f112v:44a", reason: "locus number 44a: IVTFF Table 7 defines num as a sequence number"}
+      - {line: 37279, id: "f112v:44a", reason: "locus number 44a: IVTFF Table 7 defines num as a sequence number"}
+      - {line: 37280, id: "f112v:44a", reason: "locus number 44a: IVTFF Table 7 defines num as a sequence number"}
+      - {line: 37281, id: "f112v:44a", reason: "locus number 44a: IVTFF Table 7 defines num as a sequence number"}
+    used_by: [voynich-eva, voynich-transliterations]
+    license: CC0-1.0
+    license_basis: >-
+      voynich.nu's statement (license_statement): the transliterations collected in its tables are made available under CC0; this file is linked from https://www.voynich.nu/transcr.html#links
+    license_verified: true
+    redistributed: true
+
+# Sources the roadmap names that VCAT pins but does not cache yet, each with its reason (S12, DECISIONS Q61).
+not_cached:
+  - id: RF1b-basic
+    name: Reference transliteration (RF1b), basic EVA
+    url: https://www.voynich.nu/data/RF1b-er.txt
+    sha256: eb857a1f353b18983fbc25b954e1bbce227a26d99cefabfda9206ff9b57644d2
+    upstream_version: "v. 1b"
+    listed_at: https://www.voynich.nu/transcr.html#links
+    license: CC0-1.0
+    reason: >-
+      voynich.nu's simplification of RF1b to basic EVA (ligatures and high-ASCII codes reduced); VCAT caches the full form,
+      RF1b-e.txt, which keeps what this one drops
+
+# Where VCAT's own outputs stand (roadmap item 1.9): data VCAT derives is CC0-1.0 where every source it derives from is
+# CC0-1.0; annotations VCAT writes itself are CC-BY-4.0; code is MIT (LICENSE). Each dataset card's license follows from
+# these entries (tests/test_sources.py):
+#   every source CC0-1.0, no VCAT annotations   -> cc0-1.0
+#   every source CC0-1.0, with VCAT annotations -> cc-by-4.0 (the source-derived fields stay CC0-1.0, as the card says)
+#   any source not under CC0-1.0                -> other (license_name: per-source)
+outputs:
+  code: MIT
+  derived_data_when_sources_cc0: CC0-1.0
+  vcat_annotations: CC-BY-4.0
+
+datasets:
+  - name: voynich-eva
+    card: huggingface/voynich-eva
+    sources: [ZL, IT, IT2a, CD, FG, GC, RF1b, VT, LSI]
+    # Its default lines and words are ZL's text and functions of it; since item 2.9 every other layer is one of its
+    # configurations too (the metadata, the mismatch index, the transliterations and their variant tables), so it holds
+    # VCAT's annotations (DECISIONS Q86).
+    vcat_annotations: true
+  - name: voynich-manuscript-metadata
+    card: huggingface/voynich-manuscript-metadata
+    sources: [ZL]
+    # The folios' section attribution, confidence and dispute flags are VCAT's annotations.
+    vcat_annotations: true
+  - name: voynich-transcription-mismatch
+    card: huggingface/voynich-transcription-mismatch
+    sources: [ZL, IT, CD, FG, GC]
+    # The verdicts and similarity scores are VCAT's comparison of ZL and IT; CD, FG and GC give only whether each holds
+    # the locus (sources_present), none of their text.
+    vcat_annotations: true
+  - name: voynich-transliterations
+    card: huggingface/voynich-transliterations
+    sources: [ZL, IT, IT2a, CD, FG, GC, RF1b, VT, LSI]
+    # Every row of the per-source configs is a source's text as written, with its ids and locus type (item 2.3); the
+    # variant tables' agreement, majority baseline and alignments are VCAT's comparison (item 2.7; review 3d607506
+    # finding 1, DECISIONS Q84).
+    vcat_annotations: true

@@ -1,0 +1,42 @@
+name: Data bug
+description: A dataset row, field or number that is wrong against its source transliteration or VCAT's documentation.
+title: "[data bug] "
+labels: ["data bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this when VCAT's data says something its source does not: a missing or extra row, a field that does not match
+        the source line, a profile reading that breaks its published rules, a wrong count. If the source transliteration
+        itself has the reading you think is wrong, that is a transcription error: please use the "Transcription error"
+        template instead. Corrections are logged in
+        [ERRATA.md](https://github.com/noah-chelednik/voynich-data/blob/main/ERRATA.md); the rules are in
+        [STABILITY.md](https://github.com/noah-chelednik/voynich-data/blob/main/STABILITY.md).
+  - type: input
+    id: dataset
+    attributes:
+      label: Dataset and version
+      description: For example voynich-eva 1.0.0, or the repository commit.
+    validations:
+      required: true
+  - type: input
+    id: line_id
+    attributes:
+      label: line_id (or page_id)
+      description: The identifier of the row, for example f1r:5.
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: What the data says
+      description: The field or fields as the dataset gives them.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What the source says
+      description: The source line (file and line number if you have them), or the documentation that the data contradicts.
+    validations:
+      required: true

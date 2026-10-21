@@ -1,7 +1,9 @@
 """
-Release Acceptance Tests for v0.2.1
+Release Acceptance Tests for the committed output
 
-Version-specific expected values. Update for each release.
+The committed rows are checked against their own build report and release manifest. No expected
+value is written by hand (roadmap item 1.5): whether the rows account for every source locus is the
+validators' job (`validators/`), and the parser's loss is tested in tests/test_loss_accounting.py.
 """
 
 import json
@@ -12,14 +14,7 @@ import pytest
 OUTPUT_DIR = Path(__file__).parent.parent / "output"
 JSONL_PATH = OUTPUT_DIR / "eva_lines.jsonl"
 REPORT_PATH = OUTPUT_DIR / "eva_lines_build_report.json"
-
-# v0.2.1 expected values
-EXPECTED_V0_2_1 = {
-    "total_records": 4072,
-    "unique_pages": 206,
-    "pages_in_source": 226,
-    "pages_without_lines": 20,
-}
+MANIFEST_PATH = OUTPUT_DIR / "release_manifest.json"
 
 
 def require_output():
@@ -42,26 +37,33 @@ def build_report():
 class TestReleaseV0_2_1:
     """Acceptance tests for v0.2.1 release."""
 
-    def test_total_records(self, records):
-        """Total record count matches expected value."""
-        assert len(records) == EXPECTED_V0_2_1["total_records"]
+    def test_total_records(self, records, build_report):
+        """The row count is the one the build report and the manifest record."""
+        manifest = json.loads(MANIFEST_PATH.read_text())
+        assert records
+        assert len(records) == build_report["total_lines"]
+        assert len(records) == manifest["statistics"]["total_records"]
 
-    def test_unique_pages(self, records):
-        """Unique page count matches expected value."""
+    def test_unique_pages(self, records, build_report):
+        """The pages the rows carry are the report's pages with lines."""
         pages = {r["page_id"] for r in records}
-        assert len(pages) == EXPECTED_V0_2_1["unique_pages"]
+        assert len(pages) == build_report["pages_with_lines"]
 
-    def test_report_pages_with_lines(self, build_report):
-        """Build report shows correct pages_with_lines count."""
-        assert build_report["pages_with_lines"] == EXPECTED_V0_2_1["unique_pages"]
+    def test_report_pages_with_lines(self, records, build_report):
+        """No page the report lists without lines carries a row."""
+        pages = {r["page_id"] for r in records}
+        assert pages.isdisjoint(build_report["page_ids_without_lines"])
 
     def test_report_pages_in_source(self, build_report):
-        """Build report shows correct total_pages_in_source count."""
-        assert build_report["total_pages_in_source"] == EXPECTED_V0_2_1["pages_in_source"]
+        """Pages with and without lines add up to the pages the build parsed."""
+        assert (
+            build_report["pages_with_lines"] + build_report["pages_without_lines"]
+            == build_report["total_pages_in_source"]
+        )
 
     def test_report_pages_without_lines(self, build_report):
-        """Build report shows correct pages_without_lines count."""
-        assert build_report["pages_without_lines"] == EXPECTED_V0_2_1["pages_without_lines"]
+        """The count of pages without lines is the length of their list."""
+        assert build_report["pages_without_lines"] == len(build_report["page_ids_without_lines"])
 
     def test_sha256sums_exists(self):
         """SHA256SUMS file must exist (CI requirement)."""

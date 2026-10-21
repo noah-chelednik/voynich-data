@@ -44,29 +44,10 @@ These form the core EVA alphabet and account for the vast majority of text.
 | `t` | Gallows simple | Various | Medium | Gallows character |
 | `y` | y-shape | Word-final | High | Very common ending |
 
-### Frequency Distribution
+### Frequency
 
-Based on the ZL transcription (170,607 characters):
-
-```
-e ████████████████████████████████ ~17%
-o ███████████████████████████████  ~16%
-a ████████████████████████████     ~14%
-i ██████████████████████████       ~12%
-y █████████████████                ~9%
-c ██████████████                   ~7%
-h █████████████                    ~6%
-l ████████████                     ~5%
-d ███████████                      ~5%
-s ██████████                       ~4%
-r █████████                        ~3%
-n ███████                          ~2%
-q ███                              ~1%
-k ██                               ~1%
-t ██                               ~1%
-p █                                ~0.5%
-m █                                ~0.5%
-```
+This document gives no glyph counts or percentages: any number about the transliteration is computed from the source by the
+build or by the user (for example from `text_clean` of `output/eva_lines.jsonl`), never typed here (principle 2).
 
 ---
 
@@ -86,7 +67,7 @@ These represent single visual units written as character pairs or triplets.
 ### Recognition
 
 In analysis, compound glyphs should generally be treated as single units:
-- Token `chedy` = 3 glyphs: `ch` + `e` + `d` + `y`
+- Token `chedy` = 4 glyphs: `ch` + `e` + `d` + `y`
 - Token `shol` = 3 glyphs: `sh` + `o` + `l`
 
 ---
@@ -112,41 +93,46 @@ These appear infrequently but are valid EVA characters.
 
 ## Special Marks and Separators
 
-### Word Separators
+These are not glyphs: they are the special characters of IVTFF 2.0 (Table 3, the `< > . , { } [ : ] @ ; ? /` set) and its
+in-line comments (Table 11). Their meanings below are the specification's; `docs/data_model.md` (section 4) says where
+each goes in the dataset.
 
-| Mark | Meaning | Usage |
-|------|---------|-------|
-| `.` | Definite word break | Standard separator |
-| `,` | Possible word break | Uncertain boundary |
-| ` ` | Space | Also word break |
+### Word spaces
 
-### Line and Paragraph Markers
+| Mark | Meaning (IVTFF 2.0) |
+|------|---------------------|
+| `.` | An apparent word space (Table 10) |
+| `,` | An uncertain word space: the transcriber doubted the space was wide enough (Table 10) |
+| `<->` | The text is interrupted by a drawing; implies a word space (Table 11) |
+| `<~>` | As `<->`, and the text left and right is not well aligned vertically (Table 11) |
 
-| Mark | Meaning | Usage |
-|------|---------|-------|
-| `-` | Line break/continuation | Word split across lines |
-| `=` | Paragraph break | End of paragraph |
+### Uncertain and unreadable text
 
-### Editorial Markers
+| Mark | Meaning (IVTFF 2.0) |
+|------|---------------------|
+| `?` | One unreadable character (Table 10) |
+| `???` | An unknown number of unreadable characters (Table 10) |
+| `[a:b]`, `[a:b:c]` | An uncertain reading: two or three options, the most likely first (Table 10) |
 
-| Mark | Meaning | Usage |
-|------|---------|-------|
-| `?` | Uncertain reading | Transcriber unsure |
-| `!` | Illegible | Cannot be read |
-| `*` | Editorial insertion | Added by editor |
+`!` and `*` have no special meaning in IVTFF 2.0. Older EVA transcriptions used them as illegibility markers, and VCAT's
+`has_illegible` flag and the `analysis-v1` profile still read them that way in EVA files (DECISIONS Q39).
 
-### IVTFF Markup
+### Glyph data written with markup
 
-| Markup | Meaning |
-|--------|---------|
-| `[a:b]` | Alternative readings (a or b) |
-| `{comment}` | Inline comment |
-| `<->` | Line continuation |
-| `<%>` | Paragraph start |
-| `<$>` | End marker |
-| `<~>` | Column separator |
-| `<!...>` | Processing instruction |
-| `@NNN;` | High-ASCII code |
+| Markup | Meaning (IVTFF 2.0) |
+|--------|---------------------|
+| `{ct}` | A ligature: the glyphs inside are written joined (Table 10). Braces are NOT a comment; the glyphs are text |
+| `@NNN;` | A high-ASCII character, NNN from 128 to 255 (Table 10); a glyph, not markup to remove |
+
+### Structure and comments
+
+| Markup | Meaning (IVTFF 2.0) |
+|--------|---------------------|
+| ` /` at a line end, `/ ` at the start of the next | The locus text continues on the next line (Table 10, section 5.5) |
+| `<%>` | Start of a paragraph (Table 11, section 6.9) |
+| `<$>` | End of a paragraph (Table 11, section 6.9) |
+| `<!text>` | A free textual comment, at most 80 characters with `<` and `>` (Table 11) |
+| `<@X=y>` | A text tag: sets variable X to y from this line on (Table 11, section 6.8) |
 
 ---
 
@@ -246,13 +232,9 @@ Prescott Currier developed an earlier transcription system in the 1970s. Key dif
 
 ### Common Words
 
-| Word | Count | % |
-|------|-------|---|
-| daiin | ~500+ | ~1.5% |
-| chedy | ~400+ | ~1.2% |
-| qokeedy | ~300+ | ~0.9% |
-| ol | ~200+ | ~0.6% |
-| ar | ~200+ | ~0.6% |
+Frequent words include `daiin`, `chedy`, `qokeedy`, `ol` and `ar`. Their counts are not typed here: they depend on the
+transliteration and on how uncertain spaces are read, so compute them from a named profile, for example by splitting
+`text_clean` of `output/eva_lines.jsonl` at `.` (and at `,`, or not: `no-uncertain-spaces-v1`).
 
 ---
 
@@ -263,19 +245,18 @@ Prescott Currier developed an earlier transcription system in the 1970s. Key dif
 When counting characters:
 1. Exclude word separators (`.`, `,`, space)
 2. Count compound glyphs as single units for some analyses
-3. Exclude editorial marks (`?`, `!`, etc.)
+3. Exclude the illegibility mark `?` and, in EVA text, the legacy markers `!` and `*`, as the profile `analysis-v1`
+   does (`vcat/profiles.py`)
 
 ### Tokenization
 
-VCAT provides both:
-- `text` — Raw transcription with all markup
-- `text_clean` — Cleaned text for analysis
+VCAT provides `text_raw` (the source text, byte for byte), `text` (wraps joined) and `text_clean` (the profile
+`analysis-v1`), plus the other named profiles in `vcat/profiles.py`; see `docs/data_model.md`, section 5.
 
-### Uncertain Readings
+### Uncertain readings
 
-A `?` after a character indicates transcriber uncertainty:
-- `a?` — "probably a, but not certain"
-- Handle as variant or exclude depending on analysis
+In IVTFF 2.0 a `?` stands for an unreadable character, not for doubt about the character before it. Doubt between readings is
+written `[a:b]`; `text_clean` keeps the first, and `alternates` keeps them all.
 
 ---
 
@@ -287,4 +268,4 @@ A `?` after a character indicates transcriber uncertainty:
 
 ---
 
-*This document is part of VCAT v0.1.0. Last updated: 2026-01-17*
+*Last updated: 2026-10-17 (roadmap item 1.7).*

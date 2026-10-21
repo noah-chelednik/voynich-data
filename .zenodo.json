@@ -1,0 +1,12 @@
+{
+  "title": "Voynich Computational Analysis Toolkit - Data",
+  "upload_type": "software",
+  "version": "1.0.0",
+  "description": "Data processing infrastructure for computational analysis of the Voynich Manuscript: parsers, validators and builders for the scholarly transliterations of voynich.nu, and the datasets they build (published on Hugging Face as Ched-ai/voynich-eva, Ched-ai/voynich-manuscript-metadata, Ched-ai/voynich-transcription-mismatch and Ched-ai/voynich-transliterations, CC-BY-4.0). The code is MIT.",
+  "creators": [{"name": "Chelednik, Noah"}],
+  "license": "MIT",
+  "keywords": ["voynich-manuscript", "computational-humanities", "digital-humanities", "transcription", "eva", "historical-manuscripts"],
+  "related_identifiers": [
+    {"identifier": "https://github.com/noah-chelednik/voynich-data", "relation": "isSupplementTo", "scheme": "url"}
+  ]
+}

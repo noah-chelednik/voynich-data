@@ -59,8 +59,9 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -e ".[dev]"
+      # No positional path: pytest.ini's testpaths (tests, tests/regressions) decide what runs, so the reviewer proofs run
       - name: Run tests
-        run: pytest tests/ -v
+        run: pytest -v
 
   smoke-build:
     runs-on: ubuntu-latest
@@ -73,8 +74,10 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -e ".[dev]"
+      # The builder on the cached source, its loss accounting and its smoke checks; exits non-zero on any failure
+      # (AB1 F1, B-068).
       - name: Run EVA builder smoke test
-        run: python -c "from builders.build_eva_lines import run_smoke_test, build_eva_lines, LineRecord, BuildReport; print('✓ Builder imports OK')"
+        run: python -m builders.build_eva_lines --smoke-test
 
   schema-validation:
     runs-on: ubuntu-latest

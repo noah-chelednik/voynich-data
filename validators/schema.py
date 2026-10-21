@@ -57,8 +57,13 @@ def load_schema(schema_name: str) -> dict[str, Any]:
         >>> "properties" in schema
         True
     """
-    if not schema_name.endswith(".json"):
+    # A short name is the file's stem before ".schema.json" (B-026): "transcription_lines" and
+    # "transcription_lines.schema" name "transcription_lines.schema.json". A name ending in ".json" is
+    # a file name, used as given.
+    if schema_name.endswith(".schema"):
         schema_name = f"{schema_name}.json"
+    elif not schema_name.endswith(".json"):
+        schema_name = f"{schema_name}.schema.json"
 
     schema_path = SCHEMA_DIR / schema_name
     if not schema_path.exists():

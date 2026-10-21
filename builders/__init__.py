@@ -23,30 +23,27 @@ Classes:
     MetadataBuildResult: Result from metadata build process
     MetadataBuildReport: Report from metadata build process
     MismatchRecord: Cross-transcription comparison record
-    MismatchIndexBuilder: Builder for mismatch index
 
 Example:
     >>> from builders import build_eva_lines, run_smoke_test
     >>> records, report = build_eva_lines(
-    ...     source_path="data_sources/raw_sources/ZL3b-n.txt",
-    ...     output_dir="output"
+    ...     source_path=Path("data_sources/cache/ZL3b-n.txt"),
+    ...     output_dir=Path("output")
     ... )
-    >>> len(records)
-    4072
-    >>> report.page_count
-    226
-    >>> run_smoke_test("output/eva_lines.parquet")
+    >>> len(records) == report.total_lines
+    True
+    >>> run_smoke_test(records, report)
     True
 
     >>> from builders import build_metadata_datasets
-    >>> result = build_metadata_datasets("ZL3b-n.txt", "output/metadata")
-    >>> len(result.pages)
-    226
+    >>> result = build_metadata_datasets("data_sources/cache/ZL3b-n.txt", "output/metadata")
+    >>> len(result.pages) == result.report.total_pages
+    True
 
     >>> from builders import build_mismatch_index
     >>> result = build_mismatch_index()
-    >>> result['records_count']
-    4072
+    >>> result["success"]
+    True
 
 Output formats:
     - Parquet: Efficient columnar format for analysis
@@ -80,8 +77,10 @@ from .build_metadata import (
 from .build_mismatch_index import (
     MismatchIndexBuilder,
     MismatchRecord,
-    TranscriptionLine,
     build_mismatch_index,
+    build_records,
+    build_report,
+    load_source,
 )
 
 __all__ = [
@@ -99,8 +98,10 @@ __all__ = [
     # Mismatch Index Builder
     "MismatchIndexBuilder",
     "MismatchRecord",
-    "TranscriptionLine",
     "build_mismatch_index",
+    "build_records",
+    "build_report",
+    "load_source",
     # Metadata Records (from parsers)
     "PageRecord",
     "FolioRecord",

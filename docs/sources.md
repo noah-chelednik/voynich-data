@@ -1,311 +1,188 @@
 # VCAT Data Sources
 
-This document provides comprehensive information about all data sources used in the Voynich Computational Analysis Toolkit (VCAT).
+The record of every source is `data_sources/sources.yaml`: for each file in `data_sources/cache/`, its upstream URL, SHA-256,
+upstream version (the version line of the file's own header, or, for a file whose header carries none, the version
+voynich.nu's table lists, which its file name carries) and license. The suite checks that record against the
+cache (`tests/test_sources.py`), and `vcat-verify` checks it on demand. This guide describes the sources; where it and
+`data_sources/sources.yaml` could disagree, `data_sources/sources.yaml` is the record.
 
-## Source Summary
+## The cached sources
 
-| Source Name | Version | Format | Status | Primary Use |
-|-------------|---------|--------|--------|-------------|
-| ZL Transcription | 3b | IVTFF 2.0 | ✓ Primary | EVA lines dataset |
-| IT Interlinear | 2a | IVTFF 2.0 | ✓ Verified | Comparison/mismatch |
-| Stolfi Interlinear | 1.6e6 | IVTFF 1.7 | ✓ Verified | Historical reference |
-| voynich.nu | Current | HTML/Text | ✓ Verified | Metadata |
-| Beinecke Library | Current | IIIF | ✓ Verified | Images |
+All are IVTFF files published on voynich.nu by René Zandbergen. Each was fetched from its recorded URL on 2026-10-17 (S12)
+with the pinned SHA-256 (the five cached before then had exactly those bytes upstream), and `scripts/fetch_sources.py`
+fetches any of them that is missing. Every one is built into `voynich-transliterations` (one schema, one row per reading);
+ZL also into the EVA and metadata datasets, ZL and IT 1a into the mismatch index.
 
-## Primary Source: Zandbergen-Landini (ZL) Transcription
+### ZL: Zandbergen-Landini transliteration (EVA)
 
-### Attribution
+**File**: `data_sources/cache/ZL3b-n.txt`
+**Version**: 3b of 13/05/2025 (its header: "ZL transliteration file, updated from EVMT project")
+**Transliterators**: René Zandbergen, Gabriel Landini
+**Used by**: every dataset. It is VCAT's primary source: the EVA rows (`voynich-eva`), the page, folio and quire metadata (from
+its page headers), and one side of the mismatch index.
 
-**Full Name**: Zandbergen-Landini Transcription  
-**Maintainer**: René Zandbergen  
-**Version Used**: 3b (May 2025)  
-**URL**: `http://www.voynich.nu/data/ZL3b-n.txt`
+### IT: Takahashi transliteration (EVA)
 
-### Why ZL is the Primary Source
+**File**: `data_sources/cache/IT_ivtff_1a.txt`
+**Version**: 1a of 27/12/2022 (its header: "Extracted from LSI_ivtff_0d.txt", the Landini-Stolfi interlinear file); voynich.nu
+now lists it among its previous versions (https://www.voynich.nu/data/previous/)
+**Transliterator**: Takeshi Takahashi
+**Used by**: the mismatch index, as the other side of the comparison with ZL.
 
-The ZL transcription was selected as VCAT's primary source because:
+### IT2a: Takahashi transliteration, version 2a (EVA)
 
-1. **Most Accurate**: Represents the most careful, complete transcription available
-2. **Modern Format**: Uses IVTFF 2.0 with rich metadata
-3. **Actively Maintained**: René Zandbergen continues to update and correct
-4. **Rich Metadata**: Includes page variables (quire, hand, language, etc.)
-5. **Community Standard**: Widely used in computational Voynich research
+**File**: `data_sources/cache/IT2a-n.txt`
+**Version**: 2a of 02/02/2023, modified 25/06/2025 (its header), the current IT on voynich.nu
+**Transliterator**: Takeshi Takahashi
+**Used by**: `voynich-transliterations`. The mismatch index keeps IT 1a, the version its published comparison used (DECISIONS
+Q67); both versions are in `voynich-transliterations`.
 
-### Content
+### CD: Currier transliteration (Currier alphabet)
 
-The ZL transcription contains:
-- **226 pages** (all folios including foldout panels)
-- **4,072 text loci** (lines, labels, circular text)
-- **Complete EVA text** including rare characters
-- **Page-level metadata** for each page
+**File**: `data_sources/cache/CD2a-n.txt`
+**Version**: IVTFF version 2a of 02/02/2023 (its header: "Currier transliteration from file voynich.orig")
+**Transliterators**: Prescott Currier, Mary D'Imperio
+**Used by**: the mismatch index, for whether it holds each locus (`sources_present`), none of its text; it is parsed and
+rebuilt byte for byte by the suite (`tests/test_round_trip.py`).
 
-### Format Details
+### FG: First Study Group transliteration (FSG alphabet)
 
-```
-#=IVTFF Eva- 2.0 M 5
-<f1r>      <! $Q=A $P=A $L=A $H=1 $I=H>
-<f1r.1,@P0>       fachys.ykal.ar.ataiin.shol.shory
-<f1r.2,+P0>       cthres.y.kor.sholdy
-...
-```
+**File**: `data_sources/cache/FG2a-n.txt`
+**Version**: IVTFF version 2a of 02/02/2023 (its header: "FSG transliteration, file FSG.txt. Source: Reeds, 18 June 1994")
+**Transliterators**: the First Study Group (William Friedman)
+**Used by**: the mismatch index, for whether it holds each locus (`sources_present`), none of its text; parsed and
+rebuilt by the suite.
 
-### Known Limitations
+### GC: Glen Claston transliteration (v101 alphabet)
 
-- **Subjective readings**: Some glyph identifications are judgment calls
-- **EVA limitations**: EVA alphabet cannot capture all visual distinctions
-- **Incomplete weirdos**: Rare/unusual glyphs may be normalized
+**File**: `data_sources/cache/GC2a-n.txt`
+**Version**: IVTFF version 2a of 05/02/2023, modified 25/06/2025 (its header: "Original file: voyn101.txt")
+**Transliterator**: Glen Claston (Tim Rayhel)
+**Used by**: the mismatch index, for whether it holds each locus (`sources_present`), none of its text; parsed and
+rebuilt by the suite.
 
-### Local Copy
+### RF1b: Reference transliteration (EVA, full form)
 
-**File**: `data_sources/raw_sources/ZL3b-n.txt`  
-**SHA256**: `bf5b6d4a...` (see checksums.txt)  
-**Retrieved**: 2026-01-17
+**File**: `data_sources/cache/RF1b-e.txt`
+**Version**: 1b, as voynich.nu's table of transliteration files lists it (the file's header carries no version line; its name
+does)
+**Origin**: combined automatically from the GC and ZL transliterations by René Zandbergen, defined in the STA alphabet and
+given here in EVA; a source derived from two others, not an independent reading
+**Used by**: `voynich-transliterations`.
 
----
+### VT: voynichese.com transliteration (EVA)
 
-## Comparison Source: IT Interlinear
+**File**: `data_sources/cache/VT0e-n.txt`
+**Version**: 0e, as voynich.nu's table lists it (no version line in the header)
+**Transliterator**: mainly Takeshi Takahashi, by way of LSI. voynich.nu's README says it differs from IT2a "only in
+details related to unreadable characters" (https://www.voynich.nu/data/000_README.txt); the cached files differ more:
+VT also marks other inline markup differently and lacks some of IT2a's loci (review 993fba3d finding 1)
+**Used by**: `voynich-transliterations`.
 
-### Attribution
+### LSI: Landini-Stolfi interlinear file (EVA, several transliterations per locus)
 
-**Full Name**: Interlinear Transcription File  
-**Source**: voynich.nu  
-**Version Used**: 2a  
-**URL**: `http://www.voynich.nu/data/IT2a-n.txt`
+**File**: `data_sources/cache/latin-1/LSI_ivtff_0d.txt` (apart from the others: its encoding is not the format's ASCII)
+**Version**: its header's release line, "Release 1.6e6 - ?? Dec 1998" (Jorge Stolfi's); voynich.nu's IVTFF conversion is
+`0d`, still beta ("It still requires checking by comparison against the input file", https://www.voynich.nu/data/beta/000_README.txt)
+**Transcribers**: one reading per transcriber code of each locus (`<f1r.1,@P0;H>`, `;C`, `;F`, ...); Takahashi's (`H`) is
+the source of IT and VT
+**Format**: IVTFF 1.5, so its paragraphs have end marks only (the start mark came with format 1.6); its few bytes above 127,
+all in comments, are Latin-1 (the registry's `encoding: latin-1`); four lines number a locus `44a`, which IVTFF does not
+allow: the parser reports them, never drops them (the registry's `nonconforming`)
+**Used by**: `voynich-transliterations`.
 
-### Purpose
+## How the sources depend on each other
 
-The IT file is used for transcription comparison and mismatch analysis. It contains multiple historical transcriptions aligned line-by-line.
+The sources are not independent (principle 4: no consensus reading), so agreement between two of them is not two
+confirmations:
 
-### Content
+| source | derives from |
+|---|---|
+| ZL | its transcribers' own reading (Zandbergen, Landini) |
+| GC | its transcriber's own reading (Glen Claston, v101) |
+| RF1b | ZL and GC, combined automatically upstream |
+| IT, IT2a | LSI's `H` readings (Takeshi Takahashi), extracted |
+| VT | LSI's `H` readings, as voynichese.com gives them; differs from IT2a in how it marks unreadable characters and other inline markup, and lacks some of IT2a's loci |
+| CD | Currier's and D'Imperio's transliteration; LSI's `C` readings descend from it, in EVA, with later additions (their loci are not the same sets) |
+| FG | the First Study Group's; LSI's `F` readings descend from it, in EVA (their loci are not the same sets) |
+| LSI | several transliterations, one per transcriber code (its header defines them) |
 
-Contains transcriptions from multiple historical transcribers:
+## No mapping between alphabets
 
-| Code | Transcriber | Period | Notes |
-|------|-------------|--------|-------|
-| H | Takeshi Takahashi | 1990s | First complete transcription |
-| C | Prescott Currier | 1970s | Cryptographic analysis focus |
-| F | First Study Group | 1940s | Friedman team (punchcard era) |
-| L | Don Latham | 1990s | Partial |
-| R | Mike Roe | 1990s | Partial |
+The sources keep their own alphabets: ZL, IT, IT2a, RF1b, VT and LSI write EVA; CD writes Currier's alphabet, FG the First
+Study Group's, GC v101. VCAT applies no mapping between them and publishes none: no cached or pinned file holds one, and a
+mapping between these alphabets is not one to one, so any table VCAT wrote would be its own judgement. The variant tables
+(roadmap item 2.7, `docs/data_model.md` section 12) compare EVA readings only; the other sources are listed as holding a
+locus. Mapping tables are deferred beyond this release (DECISIONS Q82).
 
-### Usage in VCAT
+## Coverage
 
-- Cross-validate ZL transcription
-- Build transcription mismatch index
-- Historical comparison analysis
+Every cached source is built into the dataset `voynich-transliterations` (`builders/build_transliterations.py`), one row per
+reading. Per source, from its build report; the page-by-page matrix is `output/transliterations/coverage_matrix.csv`:
 
-### Local Copy
+<!-- sources:coverage:start (rendered by builders.cards.transliterations_statistics from output/transliterations/transliterations_report.json; checked by tests/test_transliterations.py) -->
+| Source | Config | Alphabet | Rows (readings) | Pages | Transcribers | Lines reported, not emitted |
+|---|---|---|---|---|---|---|
+| ZL | `zl` | EVA | 5,385 | 227 | none | 0 |
+| IT | `it` | EVA | 5,215 | 225 | none | 0 |
+| IT2a | `it2a` | EVA | 5,215 | 225 | none | 0 |
+| CD | `cd` | Currier | 2,196 | 131 | none | 0 |
+| FG | `fg` | FSG | 4,060 | 202 | none | 0 |
+| GC | `gc` | v101 | 5,367 | 226 | none | 0 |
+| RF1b | `rf1b` | EVA | 5,385 | 227 | none | 0 |
+| VT | `vt` | EVA | 5,207 | 225 | none | 0 |
+| LSI | `lsi` | EVA | 17,340 | 227 | C, D, F, G, H, I, J, K, L, N, P, Q, R, T, U, V, X, Z | 4 |
+<!-- sources:coverage:end -->
 
-**File**: `data_sources/raw_sources/IT2a-n.txt`  
-**SHA256**: `7f27a8b0...` (see checksums.txt)  
-**Retrieved**: 2026-01-17
+## Sources pinned but not cached
 
----
+`data_sources/sources.yaml` lists under `not_cached` the files VCAT pins by URL, SHA-256 and version but does not commit, each
+with its reason:
 
-## Historical Reference: Stolfi Interlinear
+- **RF1b, basic EVA** (https://www.voynich.nu/data/RF1b-er.txt): voynich.nu's simplification of RF1b; the full form is cached.
 
-### Attribution
-
-**Full Name**: Stolfi's UNICAMP Interlinear File  
-**Maintainer**: Jorge Stolfi (University of Campinas, Brazil)  
-**URL**: `https://www.ic.unicamp.br/~stolfi/voynich/98-12-28/`
-
-### Historical Significance
-
-Jorge Stolfi's collection represents foundational computational Voynich work:
-
-- Early systematic transcription alignment
-- Pioneering statistical analyses
-- First comprehensive word concordance
-- Still-valuable analytical resources
-
-### Content
-
-| Resource | Description |
-|----------|-------------|
-| `text16e6.evt` | Interlinear file v1.6e6 |
-| Concordance | Complete word concordance |
-| Statistics | Word length distributions |
-
-### Limitations
-
-- **Older Format**: Uses IVTFF 1.7 conventions
-- **Historical Data**: May not reflect latest corrections
-- **Limited Metadata**: Less rich than modern files
-
-### Local Copy
-
-**File**: `data_sources/raw_sources/text16e6.evt`  
-**SHA256**: `309e717d...` (see checksums.txt)  
-**Retrieved**: 2026-01-17
-
----
-
-## Metadata Sources
-
-### voynich.nu
-
-**URL**: `https://www.voynich.nu/`  
-**Maintainer**: René Zandbergen
-
-The most comprehensive Voynich research site, providing:
-
-| Resource | URL | Content |
-|----------|-----|---------|
-| Transcriptions | `/transcr.html` | File downloads and documentation |
-| Folios | `/folios.html` | Per-folio information |
-| Quires | `/quire.html` | Quire structure |
-| EVA | `/extra/eva.html` | EVA alphabet specification |
-
-### Beinecke Library
-
-**URL**: `https://brbl-dl.library.yale.edu/vufind/Record/3519597`  
-**IIIF Manifest**: `https://collections.library.yale.edu/manifests/oid/2002046`
-
-Official repository of the Voynich Manuscript (Beinecke MS 408):
-
-- High-resolution scans of all folios
-- Official catalog information
-- IIIF API for programmatic access
-
----
-
-## File Verification
-
-### How to Verify Sources
-
-Run the verification script:
+## Verifying the cache
 
 ```bash
-cd voynich-data
-python data_sources/verify_sources.py
+vcat-verify                              # or: python -m data_sources.verify_sources
 ```
 
-This script:
-1. Checks URL accessibility
-2. Downloads content samples
-3. Computes SHA256 hashes
-4. Verifies file structure
-5. Reports any issues
+For every record it checks that the file exists, that its SHA-256 is the pinned one and the one
+`data_sources/checksums_all.txt` lists, that its first line is an IVTFF header, and that its header carries the recorded
+upstream version (or, for a listed version, that its file name carries it and its header has no version line); a cache file without a record also fails. It writes the machine receipt `reports/source_verification.json`
+and renders the human receipt `reports/source_verification_report.md` from it, and exits 0 only when every check passes.
+`--online` also fetches every fetched source from its pinned voynich.nu URL and checks the served bytes against the pin
+(network access; the same check as `scripts/check_upstream.py`, [upstream tracking](upstream_tracking.md)).
 
-### Verification Output
-
-Results are saved to:
-- `reports/source_verification.json` — Machine-readable results
-- `reports/source_verification_report.md` — Human-readable report
-
-### Checksums
-
-Expected file hashes are stored in `data_sources/raw_sources/checksums.txt`:
-
-```
-bf5b6d4a...  ZL3b-n.txt
-7f27a8b0...  IT2a-n.txt  
-309e717d...  text16e6.evt
-```
-
-To verify:
-```bash
-cd data_sources/raw_sources
-sha256sum -c checksums.txt
-```
-
----
-
-## Licensing Considerations
-
-### Transcription Data
-
-The transcription files are scholarly works created by individual researchers:
-
-| Source | Creator | Licensing Notes |
-|--------|---------|-----------------|
-| ZL | Zandbergen | Academic use generally permitted |
-| IT | Multiple | Community resource |
-| Stolfi | Stolfi | Academic use permitted |
-
-**Policy**: VCAT publishes derived datasets (statistics, indexes) and builder scripts. If licensing concerns arise, we provide scripts and checksums rather than raw redistributions.
-
-### Manuscript Images
-
-The Voynich Manuscript is held by Yale's Beinecke Library:
-
-- Images are in the public domain (15th-century work)
-- Beinecke provides open access via IIIF
-- Attribution to Beinecke is appropriate
-
-### VCAT Outputs
-
-VCAT-produced datasets and code are released under MIT License:
-- Free for commercial and non-commercial use
-- Attribution appreciated but not required
-- No warranty provided
-
----
-
-## Fetching Sources
-
-### Automatic Fetch
+The checksums file can be checked with the standard tool:
 
 ```bash
-python data_sources/fetch_sources.py
+cd data_sources/cache && sha256sum -c ../checksums_all.txt
 ```
 
-### Manual Download
+## Fetching a missing source
 
-1. Download files from URLs listed above
-2. Place in `data_sources/raw_sources/`
-3. Verify hashes match expected values
-4. Run verification script
+```bash
+python scripts/fetch_sources.py
+```
 
-### If Sources Change
+For each record marked `url_fetched` (every cached source), it downloads the file from the recorded URL when it is missing from
+the cache, to a temporary file beside it, and moves it in only when the bytes have the pinned SHA-256; otherwise it fails and
+the cache is as it was. A cached file with another hash is reported and left in place; the cache is never edited. The cache
+is committed, so a checkout needs no fetch.
 
-If upstream sources are modified:
+## If an upstream file changes
 
-1. Update `sources.yaml` with new versions
-2. Update expected hashes in `checksums.txt`
-3. Re-run builders
-4. Document changes in CHANGELOG
+A new upstream version is a new file: cache it under its own name, add its record to `data_sources/sources.yaml` (URL, SHA-256, the
+header's version line or the listed version, the table that lists it, license), add its line to `data_sources/checksums_all.txt`, and run the suite. The builders
+record the SHA-256 of the file they read in every build report, and the release manifest says whether it is the pinned one.
 
----
+## Licensing
 
-## Troubleshooting
-
-### Source Not Accessible
-
-**Symptom**: HTTP 404 or timeout
-
-**Solutions**:
-1. Check alternative URLs in `sources.yaml`
-2. Use cached local copies if available
-3. Check voynich.nu for relocated files
-
-### Hash Mismatch
-
-**Symptom**: Verification fails with different hash
-
-**Solutions**:
-1. Confirm correct file was downloaded
-2. Check if source was updated (new version)
-3. Update expected hash after verification
-
-### Format Changed
-
-**Symptom**: Parser fails on previously-working file
-
-**Solutions**:
-1. Review changes in source format
-2. Update parser to handle new format
-3. Document format version in output metadata
-
----
+The per-source license matrix and what VCAT redistributes are in `docs/SOURCES_LICENSE.md`.
 
 ## Related Documentation
 
-- [data_model.md](data_model.md) — Data model specification
-- [eva_alphabet.md](eva_alphabet.md) — EVA character reference
-- [decisions.md](decisions.md) — Project decisions
-
----
-
-*Last updated: 2026-01-17 | VCAT v0.1.0*
+- `docs/data_model.md`: the rows, the profiles, and the faithfulness contract
+- `docs/SOURCES_LICENSE.md`: the license of each source and of VCAT's outputs
+- `docs/eva_alphabet.md`: the EVA character set

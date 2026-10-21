@@ -1,69 +1,34 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Voynich Transcription Mismatch Index",
-  "description": "Schema for tracking disagreements between transcription sources",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/noah-chelednik/voynich-data/schemas/mismatch_index.schema.json",
+  "title": "VCAT mismatch index row",
+  "description": "One locus id found in ZL or IT (roadmap item 1.8): both raw texts, both readings under the named comparison profile, and the verdict of vcat.comparison.compare. No consensus reading (principle 4).",
   "type": "object",
-  "required": ["page_id", "line_number", "line_id", "status"],
+  "additionalProperties": false,
+  "required": [
+    "page_id", "line_number", "line_id", "status", "comparison_profile",
+    "zl_text_raw", "it_text_raw", "zl_reading", "it_reading", "zl_locus_type", "it_locus_type",
+    "zl_source_line", "it_source_line", "similarity_score", "sources_present"
+  ],
   "properties": {
-    "page_id": {
-      "type": "string",
-      "pattern": "^f\\d+[rv]\\d*$"
-    },
-    "line_number": {
-      "type": "integer",
-      "minimum": 1,
-      "description": "Reference line number (primary source numbering)"
-    },
-    "line_id": {
-      "type": "string",
-      "pattern": "^f\\d+[rv]\\d*:\\d+$"
-    },
-    "primary_text": {
-      "type": ["string", "null"],
-      "description": "Primary transcription text (null if missing)"
-    },
-    "secondary_text": {
-      "type": ["string", "null"],
-      "description": "Secondary transcription text (null if missing)"
-    },
-    "primary_source": {
-      "type": "string",
-      "description": "Primary source identifier"
-    },
-    "secondary_source": {
-      "type": "string",
-      "description": "Secondary source identifier"
-    },
+    "page_id": {"type": "string", "description": "IVTFF page name (f1r, f86v3, fRos)"},
+    "line_number": {"type": "integer", "minimum": 1, "description": "The locus number of the identifier"},
+    "line_id": {"type": "string", "pattern": "^(f[0-9]+[rv][0-9]*|fRos):[0-9]+$", "description": "{page_id}:{line_number}, the key shared with the EVA lines dataset"},
     "status": {
       "type": "string",
-      "enum": [
-        "ok",
-        "content_mismatch",
-        "line_count_mismatch",
-        "missing_in_primary",
-        "missing_in_secondary",
-        "reflow",
-        "parse_error",
-        "page_missing",
-        "other"
-      ],
-      "description": "Alignment status"
+      "enum": ["identical", "same_reading", "alternate_reading", "different", "zl_only", "it_only"],
+      "description": "identical: the two text_raw are equal; same_reading: the profile's word sequences are equal (. , and drawing breaks all separate words); alternate_reading: equal for some choice among the alternates; different: none of these; zl_only or it_only: one source has no such locus"
     },
-    "mismatch_type": {
-      "type": ["string", "null"],
-      "description": "Specific type of content mismatch"
-    },
-    "similarity_score": {
-      "type": ["number", "null"],
-      "minimum": 0,
-      "maximum": 1,
-      "description": "Text similarity score (0-1) if both texts present"
-    },
-    "notes": {
-      "type": "array",
-      "items": {"type": "string"},
-      "default": [],
-      "description": "Explanation of mismatch"
-    }
+    "comparison_profile": {"type": "string", "description": "The normalization profile both texts are read through (vcat.profiles), e.g. analysis-v1"},
+    "zl_text_raw": {"type": ["string", "null"], "description": "ZL's text_raw, byte for byte, or null"},
+    "it_text_raw": {"type": ["string", "null"], "description": "IT's text_raw, byte for byte, or null"},
+    "zl_reading": {"type": ["string", "null"], "description": "ZL's text under the comparison profile"},
+    "it_reading": {"type": ["string", "null"], "description": "IT's text under the comparison profile"},
+    "zl_locus_type": {"type": ["string", "null"], "description": "ZL's locus code as written (@P0, &Lz)"},
+    "it_locus_type": {"type": ["string", "null"], "description": "IT's locus code as written"},
+    "zl_source_line": {"type": ["integer", "null"], "minimum": 1, "description": "The line of the locus identifier in ZL3b-n.txt"},
+    "it_source_line": {"type": ["integer", "null"], "minimum": 1, "description": "The line of the locus identifier in IT_ivtff_1a.txt"},
+    "similarity_score": {"type": ["number", "null"], "minimum": 0, "maximum": 1, "description": "difflib ratio of the two first-reading word sequences; a description, never the verdict"},
+    "sources_present": {"type": "array", "items": {"type": "string", "enum": ["zl", "it", "cd", "fg", "gc"]}, "description": "Which of the five sources ZL, IT, CD, FG and GC hold this locus id; the other cached sources are not evaluated, so their absence here says nothing"}
   }
 }

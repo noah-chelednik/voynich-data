@@ -1,0 +1,62 @@
+# Upstream tracking (roadmap item 2.1): every week, check that voynich.nu still serves the bytes data_sources/sources.yaml
+# pins; when a source changed, open an issue with the loci added, removed and changed (or comment on the open one). It
+# reports, never adopts: a new upstream version is pinned, rebuilt and reviewed as a change of its own.
+name: upstream
+
+on:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: pip install -e .
+      - name: Check upstream
+        id: check
+        run: |
+          set +e
+          python scripts/check_upstream.py --report upstream_report.json --markdown upstream_report.md
+          echo "status=$?" >> "$GITHUB_OUTPUT"
+      # one step per exit code (0 unchanged, 1 changed, 2 unreachable, 3 both, 4 the check failed): an issue on a
+      # change, a failed run on an unreachable source or a failed check, both when both
+      - name: Open or update the issue (a source changed)
+        if: steps.check.outputs.status == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash .github/scripts/upstream_issue.sh
+      - name: Open or update the issue (a source changed, another unreachable)
+        if: steps.check.outputs.status == '3'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash .github/scripts/upstream_issue.sh
+      - name: Fail when a source is unreachable
+        if: steps.check.outputs.status == '2'
+        run: |
+          cat upstream_report.md
+          exit 1
+      - name: Fail when a source is unreachable (another changed)
+        if: steps.check.outputs.status == '3'
+        run: |
+          cat upstream_report.md
+          exit 1
+      - name: Fail when the check itself failed, or ended with any other status (killed, for one)
+        if: steps.check.outputs.status == '4' || (steps.check.outputs.status != '0' && steps.check.outputs.status != '1' && steps.check.outputs.status != '2' && steps.check.outputs.status != '3')
+        run: exit 1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: upstream-report
+          path: |
+            upstream_report.json
+            upstream_report.md

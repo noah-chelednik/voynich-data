@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/noah-chelednik/voynich-data/schemas/transliteration_loci.schema.json",
+  "title": "Transliteration loci",
+  "description": "One row per reading of one locus in one cached transliteration (roadmap item 2.3): every source in one schema, keyed by Zandbergen's page and locus ids plus the locus type, each in its own alphabet, its text exactly as written. No row interprets the text.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["source", "alphabet", "page_id", "line_number", "line_id", "locus_type", "transcriber", "text_raw", "source_line"],
+  "properties": {
+    "source": {
+      "type": "string",
+      "description": "The source's id in data_sources/sources.yaml (ZL, IT, IT2a, CD, FG, GC, RF1b, VT, LSI)"
+    },
+    "alphabet": {
+      "type": "string",
+      "description": "The source's transliteration alphabet as data_sources/sources.yaml records it (EVA, Currier, FSG, v101); the text is in it, never mapped to another"
+    },
+    "page_id": {
+      "type": "string",
+      "pattern": "^(f\\d+[rv]\\d*|fRos)$",
+      "description": "IVTFF page name (e.g., f1r, f86v3, fRos)"
+    },
+    "line_number": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "The locus number the source gives (IVTFF Table 7); Zandbergen's numbering, shared by the sources"
+    },
+    "line_id": {
+      "type": "string",
+      "pattern": "^(f\\d+[rv]\\d*|fRos):\\d+$",
+      "description": "{page_id}:{line_number}, the id the sources share; an interlinear source (LSI) has one row per transcriber's reading under it"
+    },
+    "locus_type": {
+      "type": "string",
+      "pattern": "^[@+*=&~/!](P[01bcrt]|L[0acfnpstxz]|C[ac]|R[io])$",
+      "description": "The IVTFF locus code as written, locator and locus type (IVTFF 2.0 Tables 8 and 9)"
+    },
+    "transcriber": {
+      "type": ["string", "null"],
+      "pattern": "^\\S$",
+      "description": "The transcriber code of an interlinear source's reading (IVTFF Table 7, T: LSI's H, C, F ...); null for every other source"
+    },
+    "text_raw": {
+      "type": "string",
+      "description": "The transliterated text exactly as in the source: after the locus identifier and its whitespace, continuation lines included"
+    },
+    "source_line": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "1-based line number of the locus identifier in the source file"
+    }
+  }
+}

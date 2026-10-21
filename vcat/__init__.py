@@ -53,6 +53,7 @@ License: MIT
 
 from __future__ import annotations
 
+from .api import load
 from .eva_charset import (
     CHARACTER_INFO,
     EVA_ALL_CHARS,
@@ -89,10 +90,12 @@ from .exceptions import (
 )
 from .logging import configure_logging, get_logger
 
-__version__ = "0.2.3"
+__version__ = "1.0.0"
 __author__ = "Noah Chelednik"
 
 __all__ = [
+    # The API (roadmap item 2.9)
+    "load",
     # Version
     "__version__",
     "__author__",
