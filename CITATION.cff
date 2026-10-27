@@ -10,6 +10,14 @@ authors:
   - family-names: Chelednik
     given-names: Noah
 version: 1.0.0
+doi: 10.5281/zenodo.23685586
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.23685586
+    description: "This release (1.0.0)"
+  - type: doi
+    value: 10.5281/zenodo.23685580
+    description: "All releases; resolves to the latest"
 date-released: 2026-10-25
 license: MIT
 repository-code: "https://github.com/noah-chelednik/voynich-data"

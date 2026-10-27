@@ -238,6 +238,8 @@ Please cite the transliterators in published work. **Code:** MIT (the repository
   title = {Voynich Transcription Mismatch Index},
   year = {2026},
   publisher = {Hugging Face},
+  version = {1.0.0},
+  doi = {10.5281/zenodo.23685586},
   url = {https://huggingface.co/datasets/Ched-ai/voynich-transcription-mismatch}
 }
 ```

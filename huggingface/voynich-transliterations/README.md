@@ -299,4 +299,16 @@ Please cite the transliterators and voynich.nu in published work. Per-source det
 ## Citation
 
 Cite each source's transliterators as `docs/sources.md` names them, and René Zandbergen's voynich.nu, which publishes the
-files in the IVTFF format (https://www.voynich.nu/transcr.html).
+files in the IVTFF format (https://www.voynich.nu/transcr.html). This dataset is part of VCAT Data, which is cited as:
+
+```bibtex
+@misc{vcat-data,
+  author = {Chelednik, Noah},
+  title = {Voynich Computational Analysis Toolkit - Data},
+  year = {2026},
+  version = {1.0.0},
+  publisher = {Zenodo},
+  doi = {10.5281/zenodo.23685586},
+  url = {https://github.com/noah-chelednik/voynich-data}
+}
+```

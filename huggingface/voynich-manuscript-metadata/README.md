@@ -429,6 +429,8 @@ read from the ZL page headers:** CC0-1.0, as voynich.nu states for the ZL transl
   title = {Voynich Manuscript Metadata},
   year = {2026},
   publisher = {Hugging Face},
+  version = {1.0.0},
+  doi = {10.5281/zenodo.23685586},
   url = {https://huggingface.co/datasets/Ched-ai/voynich-manuscript-metadata}
 }
 ```

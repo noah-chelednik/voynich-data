@@ -3,6 +3,7 @@
 [![CI](https://github.com/noah-chelednik/voynich-data/actions/workflows/ci.yml/badge.svg)](https://github.com/noah-chelednik/voynich-data/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Dataset](https://img.shields.io/badge/%F0%9F%A4%97%20Datasets-Ched--ai-yellow)](https://huggingface.co/Ched-ai)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23685580.svg)](https://doi.org/10.5281/zenodo.23685580)
 
 **A faithful, tested distribution of the Voynich Manuscript transliterations**
 
@@ -208,10 +209,15 @@ If you use this data in your research, please cite:
   author = {Chelednik, Noah},
   title = {Voynich Computational Analysis Toolkit - Data},
   year = {2026},
-  publisher = {GitHub},
+  version = {1.0.0},
+  publisher = {Zenodo},
+  doi = {10.5281/zenodo.23685586},
   url = {https://github.com/noah-chelednik/voynich-data}
 }
 ```
+
+This is the DOI of release 1.0.0. To cite whichever release is the latest, use [10.5281/zenodo.23685580](https://doi.org/10.5281/zenodo.23685580); every
+release has its own DOI on [Zenodo](https://doi.org/10.5281/zenodo.23685580).
 
 ---
 
