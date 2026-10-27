@@ -29,6 +29,19 @@ WORDS = [
 ]
 
 
+def assert_same_rows(got: list[dict], want: list[dict], what: str) -> None:
+    """Compare first, then assert on the result, so a failure names the first differing row instead of making pytest
+    diff some 39,000 rows (under `pytest -v` that diff ran for hours in CI)."""
+    if got == want:
+        return
+    first = next(
+        (i for i, (a, b) in enumerate(zip(got, want, strict=False)) if a != b),
+        min(len(got), len(want)),
+    )
+    message = f"{what}: {len(got)} rows, expected {len(want)}; first difference at row {first}"
+    raise AssertionError(message)
+
+
 @pytest.mark.parametrize(
     ("reading", "expected"),
     [
@@ -64,9 +77,13 @@ def test_the_committed_words_are_the_build_of_the_committed_lines(tmp_path):
     report = bw.build(tmp_path)
     for name in ("eva_words.jsonl", "eva_words_report.json"):
         assert (tmp_path / name).read_bytes() == (OUTPUT / name).read_bytes(), name
-    assert pq.read_table(OUTPUT / "eva_words.parquet").to_pylist() == WORDS
+    assert_same_rows(
+        pq.read_table(OUTPUT / "eva_words.parquet").to_pylist(), WORDS, "committed Parquet"
+    )
     # the fresh build's Parquet too, not only the committed one (reach 71660867 gap 2)
-    assert pq.read_table(tmp_path / "eva_words.parquet").to_pylist() == WORDS
+    assert_same_rows(
+        pq.read_table(tmp_path / "eva_words.parquet").to_pylist(), WORDS, "fresh Parquet"
+    )
     assert report["total_words"] == len(WORDS) == sum(line["word_count"] for line in LINES)
 
 

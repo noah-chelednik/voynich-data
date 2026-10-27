@@ -51,6 +51,8 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    # The suite takes about 25 minutes; a hang fails fast instead of running to GitHub's 6 h cap.
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
